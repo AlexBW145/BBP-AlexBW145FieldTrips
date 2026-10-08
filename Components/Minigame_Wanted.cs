@@ -59,11 +59,16 @@ public class Minigame_Wanted : Minigame
         playroom = assignedLL.LoadRoom(playroomPre, new IntVector2(32, 40), playroomPre.potentialDoorPositions[0], Direction.North, false, playroomPre.florTex, playroomPre.wallTex, playroomPre.ceilTex);
         playroom.UpdatePosition();
         assignedLL.UpdateRoomObjectPosition(playroom); // This isn't called when the room is finished loading inside the function.
+        foreach (var poster in playroomPre.posterDatas)
+        {
+            var posterData = poster.GetNew();
+            assignedLL.Ec.BuildPoster(posterData.poster, assignedLL.Ec.CellFromPosition(posterData.position.Adjusted(playroomPre.potentialDoorPositions[0], Direction.North) + new IntVector2(32, 40)), posterData.direction.RotatedRelativeToNorth(Direction.North));
+        }
         var doorPos = IntVector2.GetGridPosition(playroom.objectObject.transform.Find("Decor_ExitSign(Clone)").position);
         playroom.ec.CreateCell(0, doorPos + playroom.dir.ToIntVector2(), playroom);
         assignedLL.ManuallyBuildDoor(playroom, doorPre, doorPos, playroom.dir);
+        //playroom.doors[1].Lock(true);
         playroom.ec.DestroyCell(playroom.ec.CellFromPosition(doorPos + playroom.dir.ToIntVector2()));
-        playroom.doors[0].Lock(true);
         prePlayPos = playroom.objectObject.transform.Find("Decor_PencilNotes(Clone)").position;
         camPos = playroom.objectObject.transform.Find("Decor_Notebooks(Clone)").position;
         Destroy(playroom.objectObject.transform.Find("Decor_PencilNotes(Clone)").gameObject);
@@ -149,7 +154,7 @@ public class Minigame_Wanted : Minigame
                 var cursorPos = GlobalCam.Instance.CursorToRealScreenPosition(); //GlobalCam.Instance.UiToRealScreenPosition(new Vector2(cursor.position.x - (cursor.maxRange.x / 2f), (360f + cursor.position.y) + (cursor.minRange.y / 2f)));
                 pointRay = camera.ScreenPointToRay(new Vector3(cursorPos.x, cursorPos.y));
                 float squaredSize = camera.sensorSize.y > camera.sensorSize.x ? camera.sensorSize.y : camera.sensorSize.x;
-                cursorRaycasted.transform.position = new(pointRay.GetPoint(squaredSize).x, 5f, pointRay.GetPoint(squaredSize).z);
+                cursorRaycasted.transform.position = new(pointRay.GetPoint(squaredSize).x, 5f, pointRay.GetPoint((cursor.LocalPosition.y - cursor.minRange.y) / 5f).z);
                 if (Physics.SphereCast(pointRay, 1f, out var hit, float.PositiveInfinity, triggerMask, QueryTriggerInteraction.Collide))
                 {
                     var student = hit.transform.GetComponent<Student>();

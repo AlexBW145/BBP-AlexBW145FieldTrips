@@ -198,6 +198,12 @@ namespace AlexBWFieldtrips
                         roomId = 1,
                         type = tile.type
                     });
+                    if (sceneObjectOnAccident.levelAsset.posters.Exists(p => p.position == tile.pos))
+                    {
+                        var posterData = sceneObjectOnAccident.levelAsset.posters.Find(p => p.position == tile.pos).GetNew();
+                        posterData.position = posterData.position.Adjusted(new IntVector2(4, 22), Direction.North);
+                        studentfind.playroomPre.posterDatas.Add(posterData);
+                    }
                 }
             }
             fieldtripHub.category = RoomCategory.Null;

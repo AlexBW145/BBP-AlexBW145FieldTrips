@@ -163,8 +163,37 @@ namespace AlexBWFieldtrips
                 { Character.LookAt, new RacerData(placehold, RacerDifficulty.Hard) },
             });
             kartracing.movementAnalogData = Resources.FindObjectsOfTypeAll<PlayerMovement>().Last().movementAnalogData;
-            var bg = kartracing.transform.Find("GameCanvas").Find("Game").Find("BG");
-            kartracing.stages.Add(0, bg.gameObject);
+            RectTransform bg = (RectTransform)kartracing.transform.Find("GameCanvas").Find("Game").Find("BG");
+            var bgSet = new GameObject("Stage_1");
+            bgSet.transform.SetParent(bg.parent, false);
+            bg.SetParent(bgSet.transform, true);
+            DestroyImmediate(bg.GetComponent<Image>());
+            bg.gameObject.AddComponent<RawImage>().texture = AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_1", "Background.png");
+            bg.sizeDelta = new(1536f, 384f);
+            bg.anchoredPosition = Vector2.zero;
+            var fg = Instantiate(bg, bgSet.transform, true);
+            fg.GetComponent<RawImage>().texture = AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_1", "Foreground.png");
+            fg.anchoredPosition = Vector2.up * 50f;
+            fg.sizeDelta = new(480f, 360f);
+            fg.gameObject.name = "FG";
+            var fgbottom = Instantiate(fg, fg, true);
+            fgbottom.GetComponent<RawImage>().texture = AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_1", "ForegroundUnderneath.png");
+            fgbottom.anchorMin = fgbottom.anchorMax = fgbottom.pivot = Vector2.right * 0.5f;
+            fgbottom.anchoredPosition = Vector2.zero;
+            fgbottom.gameObject.name = "Beneath";
+            bg.localScale = Vector3.one;
+            fg.localScale = Vector3.one;
+            fgbottom.localScale = Vector3.one;
+            fgbottom.localScale += Vector3.down * 2f;
+            var scorller = bgSet.gameObject.AddComponent<HorizontalScroller>();
+            scorller.minigame = kartracing.GetComponent<MinigameBase>();
+            scorller.imgs = [fg.GetComponent<RawImage>(), fgbottom.GetComponent<RawImage>()];
+            scorller = bgSet.gameObject.AddComponent<HorizontalScroller>();
+            scorller.speed = 0.05f;
+            scorller.minigame = kartracing.GetComponent<MinigameBase>();
+            scorller.imgs = [bg.GetComponent<RawImage>()];
+            kartracing.stages.Add(bgSet);
+            bgSet.transform.SetSiblingIndex(0);
             yield return "Midi Guitar"; // DELTARUNE Rock Concert
 
             yield return "Creating Field Trip Location...";
@@ -247,8 +276,11 @@ namespace AlexBWFieldtrips
                 tutorialLocations = fieldtripHub.basicObjects.FindAll(x => x.prefab.name == "Decor_Banana");
             assigner.events.Add(new TripTuple(objectBase.Find("Minigame1Trigger").GetComponent<ClickableEventTrigger>(), studentfind.GetComponent<MinigameBase>()));
             assigner.events.Add(new TripTuple(objectBase.Find("Minigame1Tutorial").GetComponent<ClickableEventTrigger>(), studentfindTutorial.GetComponent<MinigameBase>()));
+            assigner.events.Add(new TripTuple(objectBase.Find("Minigame2Trigger").GetComponent<ClickableEventTrigger>(), kartracing.GetComponent<MinigameBase>()));
             objectBase.Find("Minigame1Trigger").localPosition = gamelocations[0].position + (Vector3.up * 5f);
-            objectBase.Find("Minigame1Tutorial").localPosition = tutorialLocations[0].position + (Vector3.up * 5f);
+            objectBase.Find("Minigame1Tutorial").localPosition = new(tutorialLocations[0].position.x, 5f, tutorialLocations[0].position.z);
+            objectBase.Find("Minigame2Trigger").localPosition = gamelocations[2].position + (Vector3.up * 5f);
+            objectBase.Find("Minigame2Tutorial").localPosition = new(tutorialLocations[2].position.x, 5f, tutorialLocations[2].position.z);
             fieldtripHub.roomFunctionContainer = function;
             fieldtripLocation.tripHub = new RoomAssetPlacementData()
             {

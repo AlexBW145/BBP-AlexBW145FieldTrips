@@ -1,18 +1,12 @@
-﻿using CampfireFrenzy;
-using MTM101BaldAPI.AssetTools;
-using PicnicPanic;
+﻿using MTM101BaldAPI.AssetTools;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 using UnityCipher;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.XR;
 
 namespace AlexBWFieldtrips.DededeeCartRacing;
 public class Minigame_CartRacing : Minigame
@@ -23,14 +17,10 @@ public class Minigame_CartRacing : Minigame
     internal bool ShowGhosts = false;
     private GhostRacer[] ghostracers;
 
-    [SerializeField] internal List<Sprite> possibleStage1BGs = new List<Sprite>();
-    [SerializeField] internal List<Sprite> possibleStage2BGs = new List<Sprite>();
-    [SerializeField] internal List<Sprite> possibleStage3BGs = new List<Sprite>();
-
     internal static readonly Dictionary<Character, RacerData> possibleRacers = new Dictionary<Character, RacerData>();
     [SerializeField] internal CartRacerController cartPre;
 
-    [SerializeField] internal readonly Dictionary<int, GameObject> stages = new Dictionary<int, GameObject>();
+    [SerializeField] internal List<GameObject> stages = new List<GameObject>();
 
     public static void AddNewRacer(NPC character, RacerData data) => possibleRacers.Add(character.Character, data);
 
@@ -187,5 +177,18 @@ internal class GhostRacer
         Image = image;
         FileName = fileName;
         this.data = data;
+    }
+}
+
+internal class HorizontalScroller : MonoBehaviour
+{
+    [SerializeField] internal float speed = 1f;
+    [SerializeField] internal MinigameBase minigame;
+    [SerializeField] internal List<RawImage> imgs = new List<RawImage>();
+
+    private void LateUpdate()
+    {
+        foreach (var img in imgs)
+            img.uvRect = new Rect(img.uvRect.position + new Vector2(speed, 0f) * minigame.DeltaTime, img.uvRect.size);
     }
 }

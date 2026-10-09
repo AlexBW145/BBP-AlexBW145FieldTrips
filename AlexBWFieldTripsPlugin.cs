@@ -26,7 +26,7 @@ using UnityEngine.UI;
 namespace AlexBWFieldtrips
 {
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
-    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "8.1.0.0")]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.0.0.0")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInProcess("BALDI.exe")]
     public class AlexBWFieldTripsPlugin : BaseUnityPlugin
@@ -136,15 +136,20 @@ namespace AlexBWFieldtrips
             yield return "Canvas Cursed"; // Canvas Curse Dedede's Cart Racing
             var kartracing = CreateMinigame<Minigame_CartRacing>("DededeCartRacing", "DededeCartRacing", perfectBonus: 1500);
             BasePatches.dedede = EnumExtensions.GetFromExtendedName<MinigameName>("DededeCartRacing");
-            var cartPre = new GameObject("CartRacerPre", typeof(RectTransform)).GetComponent<RectTransform>();
-            cartPre.SetParent(kartracing.transform, false);
-            cartPre.gameObject.SetActive(false);
+            var cartPre = new GameObject("CartRacerPre", typeof(CircleCollider2D)).transform;
+            cartPre.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
+            cartPre.GetComponent<CircleCollider2D>().radius = 2.5f;
+            cartPre.GetComponent<CircleCollider2D>().isTrigger = true;
+            cartPre.gameObject.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
             kartracing.cartPre = cartPre.gameObject.AddComponent<CartRacerController>();
-            var render = new GameObject("Render", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-            render.transform.SetParent(kartracing.cartPre.transform, false);
+            var render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            render.transform.SetParent(cartPre, false);
+            render.material = AssetFinder.FindOfTypeWithName<Material>("Lit_SpriteStandard_NoBillboard", true);
+            render.gameObject.layer = LayerMask.NameToLayer("Overlay");
             kartracing.cartPre.render = render;
-            kartracing.gameGOBJ = kartracing.transform.Find("GameCanvas").Find("Game");
-            var placehold = Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "PicnicFood_Sheet_3");
+            //kartracing.gameGOBJ = kartracing.transform.Find("GameCanvas").Find("Game");
+            var placehold = Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "1PrizeSprites_12" && x.IsPrefab());
+            render.sprite = placehold;
             Minigame_CartRacing.possibleRacers.AddRange(new Dictionary<Character, RacerData>()
             {
                 { Character.Null, new RacerData(placehold, RacerDifficulty.NotParticipating) },
@@ -162,7 +167,7 @@ namespace AlexBWFieldtrips
                 { Character.DrReflex, new RacerData(placehold, RacerDifficulty.Normal) },
                 { Character.LookAt, new RacerData(placehold, RacerDifficulty.Hard) },
             });
-            kartracing.movementAnalogData = Resources.FindObjectsOfTypeAll<PlayerMovement>().Last().movementAnalogData;
+            kartracing.movementAnalogData = Resources.FindObjectsOfTypeAll<PlayerMovement>().Last(x => x.IsPrefab()).movementAnalogData;
             RectTransform bg = (RectTransform)kartracing.transform.Find("GameCanvas").Find("Game").Find("BG");
             var bgSet = new GameObject("Stage_1");
             bgSet.transform.SetParent(bg.parent, false);
@@ -192,8 +197,32 @@ namespace AlexBWFieldtrips
             scorller.speed = 0.05f;
             scorller.minigame = kartracing.GetComponent<MinigameBase>();
             scorller.imgs = [bg.GetComponent<RawImage>()];
-            kartracing.stages.Add(bgSet);
+            kartracing.possibleStage1BGs.Add(bgSet);
             bgSet.transform.SetSiblingIndex(0);
+            var ingamestage = new GameObject("Stage1");
+            ingamestage.transform.SetParent(kartracing.transform, false);
+            var ending = new GameObject("Ending", typeof(BoxCollider2D)).GetComponent<BoxCollider2D>();
+            ending.isTrigger = true;
+            ending.transform.SetParent(ingamestage.transform, false);
+            ending.transform.localScale = new(9f, 100f, 1f);
+            ending.transform.localPosition = Vector3.right * 460f;
+            ending.gameObject.AddComponent<StageChanger>().minigame = kartracing;
+            var renderertexview = new GameObject("Gameplay", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+            renderertexview.raycastTarget = false;
+            renderertexview.rectTransform.SetParent(bgSet.transform.parent, false);
+            renderertexview.rectTransform.SetSiblingIndex(1);
+            renderertexview.rectTransform.anchoredPosition = new Vector2(240f, 180f);
+            renderertexview.rectTransform.sizeDelta = new Vector2(840f, 360f);
+            renderertexview.rectTransform.anchorMin = Vector2.zero;
+            renderertexview.rectTransform.anchorMax = Vector2.one;
+            renderertexview.rectTransform.pivot = Vector2.one / 2f;
+            var cartrendertex = new RenderTexture(840, 360, 0, RenderTextureFormat.ARGB32, -1);
+            cartrendertex.name = "CartRenderTex";
+            cartrendertex.filterMode = FilterMode.Point;
+            cartrendertex.wrapMode = TextureWrapMode.Clamp;
+            renderertexview.texture = cartrendertex;
+            kartracing.texToUse = cartrendertex;
+            kartracing.stages.Add(ingamestage);
             yield return "Midi Guitar"; // DELTARUNE Rock Concert
 
             yield return "Creating Field Trip Location...";

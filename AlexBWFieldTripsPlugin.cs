@@ -179,7 +179,7 @@ namespace AlexBWFieldtrips
             lineren.numCapVertices = 2;
             lineren.alignment = LineAlignment.TransformZ;
             lineren.positionCount = 4;
-            lineren.SetPositions([Vector3.left * 60f, Vector3.left * 40f, Vector3.left * 20f, Vector3.zero]);
+            lineren.SetPositions([Vector3.left * 20f, Vector3.left * 10f, Vector3.left * 5f, Vector3.zero]);
             lineren.widthCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
             lineren.gameObject.layer = LayerMask.NameToLayer("Overlay");
             kartracing.cartPre.liner = lineren;
@@ -243,6 +243,7 @@ namespace AlexBWFieldtrips
             fg.gameObject.AddComponent<StageCamFollower>().minigame = kartracing;
             kartracing.possibleStage2BGs.AddRange([
                 CreateStageBackground(bgSet, "Stage_2_School", AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_School", "Foreground.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_School", "ForegroundUnderneath.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_School", "Background.png")),
+                CreateStageBackground(bgSet, "Stage_2_Faculty", AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_Faculty", "Foreground.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_Faculty", "ForegroundUnderneath.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_Faculty", "Background.png")),
 
                 ]);
             kartracing.possibleStage3BGs.AddRange([

@@ -1,5 +1,5 @@
-﻿using BepInEx;
-using HarmonyLib;
+﻿using HarmonyLib;
+using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
 using System;
 using System.Collections;
@@ -58,15 +58,16 @@ public class Minigame_CartRacing : Minigame
             float posX = racerInstance.transform.localPosition.x + (stageIndex * stageBounds.xMax);
             placementPos[racerIndex] = posX;
         }
+        float[] placementPre = new float[placementPos.Length];
+        Array.Copy(placementPos, placementPre, placementPos.Length);
+        Array.Sort(placementPos);
         placementPos = placementPos.Reverse().ToArray();
-        int placement = -1, index = racersNonHash.IndexOf(racer);
+        int[] racersPos = new int[racersNonHash.Count];
         for (int i = 0; i < racersNonHash.Count; i++)
-            if (i == index)
-            {
-                placement = i;
-                break;
-            }
-        return placement;
+            racersPos[i] = Array.IndexOf(placementPos, placementPre[i]);
+        foreach (var i in racersPos)
+            Debug.Log($"Placement: {i}");
+        return racersPos[racersNonHash.IndexOf(racer)];
     }
 
     public override void Initialize(MinigameBase minigameBase, bool scoringMode)
@@ -167,6 +168,11 @@ public class Minigame_CartRacing : Minigame
     {
         if (raceFinished) return;
         var currentStage = stages.IndexOf(cart.transform.parent.gameObject);
+        if (currentStage == -1)
+        {
+            MTM101BaldiDevAPI.CauseCrash(AlexBWFieldTripsPlugin.Instance.Info, new Exception("The cart is outside the stages!"));
+            return;
+        }
         var nextStage = stages[Mathf.Min(currentStage + 1, stages.Count - 1)];
         if ((currentStage + 1) > (stages.Count - 1))
         {
@@ -191,8 +197,15 @@ public class Minigame_CartRacing : Minigame
         MusicManager.Instance.StopFile();
         MusicManager.Instance.StopMidi();
         int placement = GetPlacement(CartRacerController.PlayerInstance);
-        _winKey.SetValue(minigameBase, string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_Win"), placement + 1));
-        _loseKey.SetValue(minigameBase, string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_Lose"), placement + 1));
+        string placementText = placement switch
+        {
+            0 => "1st",
+            1 => "2nd",
+            2 => "3rd",
+            _ => $"{placement + 1}th"
+        };
+        _winKey.SetValue(minigameBase, string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_Win"), placementText));
+        _loseKey.SetValue(minigameBase, string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_Lose"), placementText));
         IEnumerator Ending()
         {
             float timer = 3f;

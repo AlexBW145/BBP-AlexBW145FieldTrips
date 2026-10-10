@@ -40,7 +40,7 @@ public class Minigame_Wanted : Minigame
     private Student targetStudent, targetStudentPre;
     private List<Student> spawnedStudents = new List<Student>();
     private LanternMode lightController;
-    [SerializeField] internal SoundObject wrongClick, audPoints, tickingTime, timeBell;
+    [SerializeField] internal SoundObject wrongClick, audPoints, tickingTime, timeBell, drumRoll, drumRollEnd;
     private List<LanternSource> LanternSources => (List<LanternSource>)_sources.GetValue(lightController);
     private Transform cursorRaycasted;
     private LayerMask triggerMask = LayerMask.GetMask("NPCs");
@@ -246,11 +246,9 @@ public class Minigame_Wanted : Minigame
                     if (scoringMode)
                         minigameBase.SetScore(score);
                     else
-                    {
                         minigameBase.Lose();
-                        MusicManager.Instance.StopFile();
-                        MusicManager.Instance.StopMidi();
-                    }
+                    MusicManager.Instance.StopFile();
+                    MusicManager.Instance.StopMidi();
                 }
                 timerText.text = "0:00";
                 break;
@@ -363,6 +361,7 @@ public class Minigame_Wanted : Minigame
             lightController.AddSource(light, 2.5f, Color.white);
         float timer = 3.5f, elaspedLightTime = 0.5f;
         bool whichSide = true;
+        minigameBase.AudioManager.QueueAudio(drumRoll, true);
         while (timer > 0f)
         {
             timer -= minigameBase.DeltaTime;
@@ -381,6 +380,8 @@ public class Minigame_Wanted : Minigame
         Destroy(lights[0].gameObject);
         Destroy(lights[1].gameObject);
         timer = 2f;
+        minigameBase.AudioManager.FlushQueue(true);
+        minigameBase.AudioManager.PlaySingle(drumRollEnd);
         yield return null;
         while (timer > 0f)
         {

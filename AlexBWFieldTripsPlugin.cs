@@ -104,6 +104,8 @@ namespace AlexBWFieldtrips
             studentfind.audPoints = AssetFinder.FindOfTypeWithName<SoundObject>("YTPPickup_0", true);
             studentfind.tickingTime = AssetFinder.FindOfTypeWithName<SoundObject>("TimeLimitTicking", true);
             studentfind.timeBell = AssetFinder.FindOfTypeWithName<SoundObject>("TimeLimitBell", true);
+            studentfind.drumRoll = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "WANTED_DrumRoll.wav"), "WANTED_DrumRoll", SoundType.Effect, Color.white);
+            studentfind.drumRollEnd = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "WANTED_DrumRollEnd.wav"), "WANTED_DrumRollEnd", SoundType.Effect, Color.white);
             studentfind.transform.GetChild(0).GetChild(0).GetComponentInChildren<Image>(true).gameObject.SetActive(false);
             studentfind.studentToFindUI = new GameObject("StudentUI", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
             studentfind.studentToFindUI.raycastTarget = false;

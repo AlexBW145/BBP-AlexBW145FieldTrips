@@ -50,7 +50,7 @@ namespace AlexBWFieldtrips
 
         private IEnumerator PreLoad()
         {
-            yield return 5;
+            yield return 4;
             yield return "Templating Templates";
             AssetLoader.LocalizationFromFunction((lang) => new System.Collections.Generic.Dictionary<string, string>()
             {
@@ -282,7 +282,30 @@ namespace AlexBWFieldtrips
             cartrendertex.wrapMode = TextureWrapMode.Clamp;
             renderertexview.texture = cartrendertex;
             kartracing.texToUse = cartrendertex;
-            yield return "Midi Guitar"; // DELTARUNE Rock Concert
+            var booster = new GameObject("CartBooster", typeof(CircleCollider2D));
+            booster.transform.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
+            kartracing.boostPre = booster.AddComponent<CartBooster>();
+            booster.GetComponent<CircleCollider2D>().isTrigger = true;
+            booster.GetComponent<CircleCollider2D>().radius = 1f;
+            render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            render.transform.SetParent(booster.transform, false);
+            render.material = AssetFinder.FindOfTypeWithName<Material>("Lit_SpriteStandard_NoBillboard", true);
+            render.gameObject.layer = LayerMask.NameToLayer("Overlay");
+            render.drawMode = SpriteDrawMode.Sliced;
+            kartracing.boostPre.spriteRenderer = render;
+            kartracing.boosterSprs.AddRange(Resources.FindObjectsOfTypeAll<Sprite>().Where(x => x.name.StartsWith("PicnicFood_Sheet_") && x.IsPrefab()));
+            var hurter = new GameObject("CartHurter", typeof(CircleCollider2D));
+            hurter.transform.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
+            kartracing.hurtPre = hurter.AddComponent<CartHurter>();
+            hurter.GetComponent<CircleCollider2D>().isTrigger = true;
+            hurter.GetComponent<CircleCollider2D>().radius = 1f;
+            render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            render.transform.SetParent(hurter.transform, false);
+            render.material = AssetFinder.FindOfTypeWithName<Material>("Lit_SpriteStandard_NoBillboard", true);
+            render.gameObject.layer = LayerMask.NameToLayer("Overlay");
+            render.drawMode = SpriteDrawMode.Sliced;
+            kartracing.hurtPre.spriteRenderer = render;
+            kartracing.hurtSpr = AssetFinder.FindOfTypeWithName<Sprite>("Campfire_Sheet_18", true);
 
             yield return "Creating Field Trip Location...";
             var reader = new BinaryReader(File.OpenRead(Path.Combine(AssetLoader.GetModPath(this), "abwfieldtripland.bpl")));

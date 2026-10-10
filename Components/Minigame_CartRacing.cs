@@ -43,6 +43,10 @@ public class Minigame_CartRacing : Minigame
     internal Vector3 CameraPosition => camPos;
     internal Rect stageBounds { get; private set; }
     [SerializeField] internal SoundObject audFinished;
+    [SerializeField] internal CartBooster boostPre;
+    [SerializeField] internal CartHurter hurtPre;
+    [SerializeField] internal List<Sprite> boosterSprs = new List<Sprite>();
+    [SerializeField] internal Sprite hurtSpr;
 
     private const int RACERS_COUNT = 7;
     public static void AddNewRacer(NPC character, RacerData data) => possibleRacers.Add(character.Character, data);
@@ -129,6 +133,7 @@ public class Minigame_CartRacing : Minigame
     public override void VirtualReset()
     {
         base.VirtualReset();
+        GameObject.FindObjectsOfType<CartObject>(false).Do(x => Destroy(x.gameObject));
         while (CartRacerController.Racers.Count > 0)
         {
             var racer = CartRacerController.Racers.First();
@@ -147,6 +152,11 @@ public class Minigame_CartRacing : Minigame
         AssignRacers(scoringMode ? 0 : RACERS_COUNT);
         camera.transform.position = CartRacerController.PlayerInstance.transform.position + (Vector3.right * (15f + stageBounds.xMin));
         camPos = camera.transform.position;
+        foreach (var stage in stages)
+        {
+            StartCoroutine(BoosterSpawner(stage));
+            StartCoroutine(HurterSpawner(stage));
+        }
     }
 
     public override void VirtualUpdate()
@@ -162,6 +172,41 @@ public class Minigame_CartRacing : Minigame
         camera.transform.position = camPos;
         foreach (var racer in CartRacerController.Racers)
             racer.VirtualUpdate();
+    }
+
+    private IEnumerator BoosterSpawner(GameObject stage)
+    {
+        while (!raceFinished)
+        {
+            float timer = UnityEngine.Random.Range(0.1f, 0.6f);
+            while (timer > 0f && !raceFinished)
+            {
+                timer -= minigameBase.DeltaTime;
+                yield return null;
+            }
+            if (raceFinished)
+                yield break;
+            for (int i = 0; i < UnityEngine.Random.Range(1, 9); i++)
+                CreateBooster(stage);
+            yield return null;
+        }
+    }
+    private IEnumerator HurterSpawner(GameObject stage)
+    {
+        while (!raceFinished)
+        {
+            float timer = UnityEngine.Random.Range(0.1f, 0.9f);
+            while (timer > 0f && !raceFinished)
+            {
+                timer -= minigameBase.DeltaTime;
+                yield return null;
+            }
+            if (raceFinished)
+                yield break;
+            for (int i = 0; i < UnityEngine.Random.Range(1, 3); i++)
+                CreateHurter(stage);
+            yield return null;
+        }
     }
 
     internal void CartMadeItToFinish(CartRacerController cart)
@@ -292,6 +337,18 @@ public class Minigame_CartRacing : Minigame
         }
         Instantiate(cartPre, stages[0].transform, false).Initialize(this, possibleRacers[Character.Null], true, halfplacement);
     }
+    private void CreateBooster(GameObject stage)
+    {
+        var booster = Instantiate(boostPre, stage.transform, false);
+        booster.transform.localPosition = new Vector2(UnityEngine.Random.Range(stageBounds.xMin * 10f, stageBounds.xMax), UnityEngine.Random.Range(stageBounds.yMin, stageBounds.yMax));
+        booster.Initialize(this, boosterSprs[UnityEngine.Random.Range(0, boosterSprs.Count)], UnityEngine.Random.Range(10f, 20f));
+    }
+    private void CreateHurter(GameObject stage)
+    {
+        var hurter = Instantiate(hurtPre, stage.transform, false);
+        hurter.transform.localPosition = new Vector2(UnityEngine.Random.Range(stageBounds.xMin * 10f, stageBounds.xMax), UnityEngine.Random.Range(stageBounds.yMin, stageBounds.yMax));
+        hurter.Initialize(this, hurtSpr, UnityEngine.Random.Range(10f, 20f));
+    }
 }
 
 public enum RacerDifficulty
@@ -307,7 +364,7 @@ internal class CartRacerController : MonoBehaviour
     private const float
         REG_SPEED = 25f,
         BOOST_SPEED = 10f,
-        SLOW_SPEED = 10f;
+        SLOW_SPEED = 5f;
     public static HashSet<CartRacerController> Racers = new HashSet<CartRacerController>();
     [SerializeField] internal SpriteRenderer render;
     [SerializeField] internal LineRenderer liner;
@@ -316,6 +373,7 @@ internal class CartRacerController : MonoBehaviour
     private Vector2 _absoluteVector, _deltaVector;
     private Vector2 _movement;
     private bool isPlayer = false, transitioningToNext = false;
+    private int boostingThisFrame = 0;
     public bool Player => isPlayer;
     public static CartRacerController PlayerInstance { get; private set; }
     private float speed = REG_SPEED;
@@ -387,6 +445,8 @@ internal class CartRacerController : MonoBehaviour
 
     internal void VirtualUpdate()
     {
+        boostingThisFrame = 0;
+        speed = Mathf.MoveTowards(speed, REG_SPEED, speed * minigame.minigameBase.DeltaTime);
         _movement = transform.localPosition;
         _movement.x += (speed * minigame.minigameBase.DeltaTime);
         if (isPlayer)
@@ -537,6 +597,17 @@ internal class CartRacerController : MonoBehaviour
         if (PlayerInstance == this)
             PlayerInstance = null;
     }
+
+    public void Boost()
+    {
+        boostingThisFrame++;
+        speed += BOOST_SPEED * boostingThisFrame;
+    }
+    public void Hurt()
+    {
+        boostingThisFrame = 0;
+        speed = SLOW_SPEED;
+    }
 }
 
 public class RacerData
@@ -598,13 +669,53 @@ internal class StageCamFollower : MonoBehaviour
     }
 }
 
-internal class StageChanger : MonoBehaviour
+public class CartObject : MonoBehaviour
 {
-    [SerializeField] internal Minigame_CartRacing minigame;
+    protected Minigame_CartRacing minigame;
+    [SerializeField] internal SpriteRenderer spriteRenderer;
+    private float speed;
+    public virtual void Initialize(Minigame_CartRacing game, Sprite sprite, float speed)
+    {
+        minigame = game;
+        spriteRenderer.sprite = sprite;
+        spriteRenderer.size = Vector2.one * 3f;
+        this.speed = speed;
+    }
+
+    private void Update()
+    {
+        transform.localPosition += Vector3.left * (speed * minigame.minigameBase.DeltaTime);
+        if (!minigame.stageBounds.Contains(transform.localPosition))
+            Destroy(gameObject);
+    }
+}
+
+internal class CartBooster : CartObject
+{
     private void OnTriggerEnter2D(Collider2D other)
     {
         var cart = other.GetComponent<CartRacerController>();
         if (cart != null)
-            minigame.CartMadeItToFinish(cart);
+        {
+            cart.Boost();
+            Destroy(gameObject);
+        }
+    }
+}
+internal class CartHurter : CartObject
+{
+    public override void Initialize(Minigame_CartRacing game, Sprite sprite, float speed)
+    {
+        base.Initialize(game, sprite, speed);
+        spriteRenderer.size = Vector2.one * 4.5f;
+    }
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        var cart = other.GetComponent<CartRacerController>();
+        if (cart != null)
+        {
+            cart.Hurt();
+            Destroy(gameObject);
+        }
     }
 }

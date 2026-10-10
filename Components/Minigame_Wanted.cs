@@ -195,7 +195,7 @@ public class Minigame_Wanted : Minigame
                     }
                 }
                 else if (minigameBase.AudioManager.QueuedAudioIsPlaying)
-                    minigameBase.AudioManager.FlushQueue(true);
+                    minigameBase.AudioManager.FlushQueue(false);
                 string text = Mathf.Floor(timer % 60f).ToString();
                 if (Mathf.Floor(timer % 60f) < 10f)
                     text = "0" + Mathf.Floor(timer % 60f);
@@ -246,7 +246,11 @@ public class Minigame_Wanted : Minigame
                     if (scoringMode)
                         minigameBase.SetScore(score);
                     else
+                    {
                         minigameBase.Lose();
+                        MusicManager.Instance.StopFile();
+                        MusicManager.Instance.StopMidi();
+                    }
                 }
                 timerText.text = "0:00";
                 break;

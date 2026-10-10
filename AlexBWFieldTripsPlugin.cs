@@ -135,6 +135,7 @@ namespace AlexBWFieldtrips
                 ], clipMusic: findTutorialMusic);
             yield return "Canvas Cursed"; // Canvas Curse Dedede's Cart Racing
             var kartracing = CreateMinigame<Minigame_CartRacing>("DededeCartRacing", "DededeCartRacing", perfectBonus: 1500);
+            kartracing.audFinished = studentfind.timeBell;
             BasePatches.dedede = EnumExtensions.GetFromExtendedName<MinigameName>("DededeCartRacing");
             var cartPre = new GameObject("CartRacerPre", typeof(CircleCollider2D)).transform;
             cartPre.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
@@ -142,6 +143,46 @@ namespace AlexBWFieldtrips
             cartPre.GetComponent<CircleCollider2D>().isTrigger = true;
             cartPre.gameObject.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
             kartracing.cartPre = cartPre.gameObject.AddComponent<CartRacerController>();
+            FieldInfo
+                _disableSubtitles = AccessTools.DeclaredField(typeof(AudioManager), "disableSubtitles");
+            var audManCart = cartPre.gameObject.AddComponent<AudioManager>();
+            audManCart.audioDevice = audManCart.gameObject.AddComponent<AudioSource>();
+            audManCart.audioDevice.playOnAwake = false;
+            audManCart.audioDevice.dopplerLevel = 0f;
+            audManCart.audioDevice.spread = 0f;
+            audManCart.audioDevice.spatialBlend = 1f;
+            audManCart.audioDevice.minDistance = 25f;
+            audManCart.audioDevice.maxDistance = 50f;
+            audManCart.ignoreListenerPause = true;
+            audManCart.volumeModifier = 0.35f;
+            _disableSubtitles.SetValue(audManCart, true);
+            kartracing.cartPre.audMan = audManCart;
+            audManCart = cartPre.gameObject.AddComponent<AudioManager>();
+            audManCart.audioDevice = audManCart.gameObject.AddComponent<AudioSource>();
+            audManCart.audioDevice.playOnAwake = false;
+            audManCart.audioDevice.dopplerLevel = 4f;
+            audManCart.audioDevice.spread = 0f;
+            audManCart.audioDevice.spatialBlend = 1f;
+            audManCart.audioDevice.minDistance = 25f;
+            audManCart.audioDevice.maxDistance = 50f;
+            audManCart.useUnscaledPitch = true;
+            audManCart.ignoreListenerPause = true;
+            audManCart.volumeModifier = 0.1f;
+            _disableSubtitles.SetValue(audManCart, true);
+            audManCart.ReflectionSetVariable("loopOnStart", true);
+            audManCart.ReflectionSetVariable("soundOnStart", new SoundObject[] { ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CART_engine.wav"), "CART_engine", SoundType.Effect, Color.white) });
+            var lineren = new GameObject("Liner", typeof(LineRenderer)).GetComponent<LineRenderer>();
+            lineren.transform.SetParent(cartPre.transform, false);
+            lineren.transform.localPosition = Vector3.down * 2.5f;
+            lineren.useWorldSpace = false;
+            lineren.material = AssetFinder.FindOfTypeWithName<Material>("Lit_SpriteStandard_NoBillboard", true);
+            lineren.numCapVertices = 2;
+            lineren.alignment = LineAlignment.TransformZ;
+            lineren.positionCount = 4;
+            lineren.SetPositions([Vector3.left * 60f, Vector3.left * 40f, Vector3.left * 20f, Vector3.zero]);
+            lineren.widthCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
+            lineren.gameObject.layer = LayerMask.NameToLayer("Overlay");
+            kartracing.cartPre.liner = lineren;
             var render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             render.transform.SetParent(cartPre, false);
             render.material = AssetFinder.FindOfTypeWithName<Material>("Lit_SpriteStandard_NoBillboard", true);
@@ -199,18 +240,34 @@ namespace AlexBWFieldtrips
             scorller.imgs = [bg.GetComponent<RawImage>()];
             kartracing.possibleStage1BGs.Add(bgSet);
             bgSet.transform.SetSiblingIndex(0);
+            fg.gameObject.AddComponent<StageCamFollower>().minigame = kartracing;
+            kartracing.possibleStage2BGs.AddRange([
+                CreateStageBackground(bgSet, "Stage_2_School", AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_School", "Foreground.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_School", "ForegroundUnderneath.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_2_School", "Background.png")),
+
+                ]);
+            kartracing.possibleStage3BGs.AddRange([
+                CreateStageBackground(bgSet, "Stage_3_Camping", AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_3_Camp", "Foreground.png"), (Texture2D)fgbottom.GetComponent<RawImage>().texture, AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_3_Camp", "Background.png")),
+
+                ]);
             var ingamestage = new GameObject("Stage1");
             ingamestage.transform.SetParent(kartracing.transform, false);
-            var ending = new GameObject("Ending", typeof(BoxCollider2D)).GetComponent<BoxCollider2D>();
+            kartracing.stages.Add(ingamestage);
+            ingamestage = new GameObject("Stage2");
+            ingamestage.transform.SetParent(kartracing.transform, false);
+            kartracing.stages.Add(ingamestage);
+            ingamestage = new GameObject("Stage3");
+            ingamestage.transform.SetParent(kartracing.transform, false);
+            kartracing.stages.Add(ingamestage);
+            /*var ending = new GameObject("Ending", typeof(BoxCollider2D)).GetComponent<BoxCollider2D>();
             ending.isTrigger = true;
             ending.transform.SetParent(ingamestage.transform, false);
-            ending.transform.localScale = new(9f, 100f, 1f);
+            ending.transform.localScale = new(9f, 400f, 1f);
             ending.transform.localPosition = Vector3.right * 460f;
-            ending.gameObject.AddComponent<StageChanger>().minigame = kartracing;
+            ending.gameObject.AddComponent<StageChanger>().minigame = kartracing;*/
             var renderertexview = new GameObject("Gameplay", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
             renderertexview.raycastTarget = false;
             renderertexview.rectTransform.SetParent(bgSet.transform.parent, false);
-            renderertexview.rectTransform.SetSiblingIndex(1);
+            renderertexview.rectTransform.SetSiblingIndex(renderertexview.transform.parent.childCount - 2);
             renderertexview.rectTransform.anchoredPosition = new Vector2(240f, 180f);
             renderertexview.rectTransform.sizeDelta = new Vector2(840f, 360f);
             renderertexview.rectTransform.anchorMin = Vector2.zero;
@@ -222,7 +279,6 @@ namespace AlexBWFieldtrips
             cartrendertex.wrapMode = TextureWrapMode.Clamp;
             renderertexview.texture = cartrendertex;
             kartracing.texToUse = cartrendertex;
-            kartracing.stages.Add(ingamestage);
             yield return "Midi Guitar"; // DELTARUNE Rock Concert
 
             yield return "Creating Field Trip Location...";
@@ -343,6 +399,20 @@ namespace AlexBWFieldtrips
             _objectsToToggle.SetValue(assigner.fieldTripFunc, objectsToToggle.ToArray());
 
             assetMan.Add("FieldTrip", fieldtripLocation);
+        }
+
+        private GameObject CreateStageBackground(GameObject bgSetTemplate, string name, Texture2D foreground, Texture2D foregroundBottom, Texture2D sky)
+        {
+            var bgSet = Instantiate(bgSetTemplate, bgSetTemplate.transform.parent, true);
+            bgSet.name = name;
+            bgSet.transform.localScale = Vector3.one;
+            bgSet.transform.localPosition = Vector3.zero;
+            bgSet.transform.Find("BG").GetComponent<RawImage>().texture = sky;
+            bgSet.transform.Find("FG").GetComponent<RawImage>().texture = foreground;
+            bgSet.transform.Find("FG").GetChild(0).GetComponent<RawImage>().texture = foregroundBottom;
+            bgSet.SetActive(false);
+            bgSet.transform.SetSiblingIndex(0);
+            return bgSet;
         }
 
         private IEnumerator PostLoad()

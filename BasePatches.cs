@@ -63,8 +63,24 @@ namespace AlexBWFieldtrips
             if (___available)
                 ___audCampIntro = CoreGameManager.Instance.currentFieldTrip.intro;
         }
+        [HarmonyPatch(typeof(MinigameBase), "Pause"), HarmonyPostfix]
+        private static void PauseSoundObject(bool ___paused, string ___midiSong)
+        {
+            if (___midiSong.Length <= 0)
+            {
+                AudioSource[] sources = (AudioSource[])_audioSource.GetValue(MusicManager.Instance);
+                int source = (int)_currentSource.GetValue(MusicManager.Instance);
+                if (___paused)
+                    sources[source].Pause();
+                else
+                    sources[source].UnPause();
+            }
+        }
 
-        private static FieldInfo _musObj = AccessTools.Field(typeof(MinigameBase), "musicObject");
+        private static FieldInfo
+            _musObj = AccessTools.Field(typeof(MinigameBase), "musicObject"),
+            _currentSource = AccessTools.Field(typeof(MusicManager), "currentSource"),
+            _audioSource = AccessTools.Field(typeof(MusicManager), "fileSoure");
         [HarmonyPatch(typeof(MinigameTutorial), nameof(MinigameTutorial.Initialize)), HarmonyPostfix]
         static void ResultSoundObject(MinigameTutorial __instance)
         {

@@ -5,6 +5,7 @@ using HarmonyLib;
 using MonoMod.Utils;
 using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
+using MTM101BaldAPI.Components.Animation;
 using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
@@ -16,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using ThumblysFieldTripsAPI;
 using ThumblysFieldTripsAPI.Builders;
 using TMPro;
 using UnityEngine;
@@ -76,9 +78,9 @@ namespace AlexBWFieldtrips
 
                 ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CART_engine.wav"), "CART_engine", SoundType.Effect, Color.white),
 
-                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandNotice.wav"), "Vfx_ABW_FunlandTrip", SoundType.Voice, him),
-                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandPass.wav"), "Vfx_ABW_BusPass", SoundType.Voice, him),
-                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandIntro.wav"), "Vfx_ABW_FunlandIntro", SoundType.Voice, him)
+                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandNotice.mp3"), "Vfx_ABW_FunlandTrip", SoundType.Voice, him),
+                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandPass.mp3"), "Vfx_ABW_BusPass", SoundType.Voice, him),
+                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandIntro.mp3"), "Vfx_ABW_FunlandIntro", SoundType.Voice, him)
                 ],
                 [
                     "WANTED/Drumroll",
@@ -175,7 +177,7 @@ namespace AlexBWFieldtrips
                 .SetWinBonus(700)
                 .Build().GetComponent<Minigame_Wanted>();
             studentfind.playroomPre = playroomPre;
-            studentfind.minigameHud = studentfind.gameObject.GetComponentInChildren<MinigameHUD>(true);
+            studentfind.minigameHud = Instantiate(FieldTripsAPI.minigameHudPref, studentfind.transform.Find("GameCanvas").Find("Game"));
             studentfind.wrongClick = AssetFinder.FindOfTypeWithName<SoundObject>("Activity_Incorrect", true);
             studentfind.audPoints = AssetFinder.FindOfTypeWithName<SoundObject>("YTPPickup_0", true);
             studentfind.tickingTime = AssetFinder.FindOfTypeWithName<SoundObject>("TimeLimitTicking", true);
@@ -199,6 +201,7 @@ namespace AlexBWFieldtrips
             studentfind.doorPre = AssetFinder.FindOfTypeWithName<StandardDoor>("ClassDoor_Standard", true);
             var findTutorialMusic = assetMan.Get<LoopingSoundObject>("TutorialMusic/WANTED");
             Sprite[] tutorialScreens = assetMan.Get<Sprite[]>("Tutorial/WANTED");
+            Sprite[] placeholdTalk = [assetMan.Get<Sprite>("ABWLand/Moon")];
             var studentfindTutorial = new MinigameTutorialBuilder()
                 .SetName("MinigameTutorial_SuperWanted64DS")
                 .AddScreen(new TutorialScreenInfo(tutorialScreens[0], new(130f, -212f, 1.5f), "Are you ready to search for some unique students?\nIt's time for WANTED!"))
@@ -208,9 +211,12 @@ namespace AlexBWFieldtrips
                 .AddScreen(new(tutorialScreens[4], new(90f, -50f, 1f), "In every next rounds, more students will appear\nso be precise on where you are searching."))
                 .AddScreen(new TutorialScreenInfo(tutorialScreens[5], new(30f, 110f, 0.5f), "In scoring mode, future rounds are made to be cramped!"))
                 .SetMidi("")
+                .AddTutorAnimation("ABW_Talk1", new SpriteAnimation(placeholdTalk, 1.4f))
+                .AddTutorAnimation("ABW_Talk2", new SpriteAnimation(placeholdTalk, 1.4f))
+                .AddTutorAnimation("ABW_Talk3", new SpriteAnimation(placeholdTalk, 0.75f))
                 .Build();
-            _musicObject.SetValue(studentfindTutorial.minigameBase, findTutorialMusic);
-            _minigame.SetValue(studentfindTutorial.minigameBase, (MinigameName)_minigame.GetValue(studentfind.minigameBase)); // See the patches
+            _musicObject.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), findTutorialMusic);
+            _minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(studentfind.GetComponent<MinigameBase>())); // See the patches
             yield return "Canvas Cursed"; // Canvas Curse Dedede's Cart Racing
             var kartracing = new MinigameBaseBuilder<Minigame_CartRacing>()
                 .SetName("Minigame_DededeCartRacing")
@@ -219,7 +225,7 @@ namespace AlexBWFieldtrips
                 .SetEndText("Mgm_DededeCartRacing_Win", "Mgm_DededeCartRacing_Lose")
                 .SetWinBonus(1500)
                 .Build().GetComponent<Minigame_CartRacing>();
-            kartracing.minigameHud = kartracing.GetComponentInChildren<MinigameHUD>(true);
+            kartracing.minigameHud = Instantiate(FieldTripsAPI.minigameHudPref, kartracing.transform.Find("GameCanvas").Find("Game"));
             kartracing.audFinished = studentfind.timeBell;
             BasePatches.dedede = EnumExtensions.GetFromExtendedName<MinigameName>("DededeCartRacing");
             var cartPre = new GameObject("CartRacerPre", typeof(CircleCollider2D)).transform;
@@ -404,9 +410,12 @@ namespace AlexBWFieldtrips
                 .AddScreen(new TutorialScreenInfo(placehold, default, "There are three stages in total!\nWhen someone reaches to the end, the race ends!"))
                 .AddScreen(new TutorialScreenInfo(placehold, default, "In scoring mode, you are after the clock for the best record!"))
                 .SetMidi("")
+                .AddTutorAnimation("ABW_Talk1", new SpriteAnimation(placeholdTalk, 1.4f))
+                .AddTutorAnimation("ABW_Talk2", new SpriteAnimation(placeholdTalk, 1.4f))
+                .AddTutorAnimation("ABW_Talk3", new SpriteAnimation(placeholdTalk, 0.75f))
                 .Build();
-            _musicObject.SetValue(kartracingTutorial.minigameBase, assetMan.Get<LoopingSoundObject>("TutorialMusic/CartRace"));
-            _minigame.SetValue(studentfindTutorial.minigameBase, (MinigameName)_minigame.GetValue(kartracing.minigameBase));
+            _musicObject.SetValue(kartracingTutorial.GetComponent<MinigameBase>(), assetMan.Get<LoopingSoundObject>("TutorialMusic/CartRace"));
+            _minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(kartracing.GetComponent<MinigameBase>()));
 
             yield return "Creating Field Trip Location...";
             List<BasicObjectData>
@@ -439,9 +448,9 @@ namespace AlexBWFieldtrips
                 .SetFunctionGameobject(function.gameObject)
                 .SetTutorialBaldiSprite(placehold)
                 .SetIntroTutor(new(buspos.position.x + 14f, 3.66f, buspos.position.z + 6f), null)
-                .AddMinigameTrigger(new MinigameSettings(studentfind.minigameBase, gamelocations[0].position + (Vector3.up * 5f)))
+                .AddMinigameTrigger(new MinigameSettings(studentfind.GetComponent<MinigameBase>(), gamelocations[0].position + (Vector3.up * 5f)))
                 .AddMinigameTutorialBaldi(studentfindTutorial, new(tutorialLocations[0].position.x, 5f, tutorialLocations[0].position.z))
-                .AddMinigameTrigger(new MinigameSettings(kartracing.minigameBase, gamelocations[2].position + (Vector3.up * 5f)))
+                .AddMinigameTrigger(new MinigameSettings(kartracing.GetComponent<MinigameBase>(), gamelocations[2].position + (Vector3.up * 5f)))
                 .AddMinigameTutorialBaldi(kartracingTutorial, new(tutorialLocations[2].position.x, 5f, tutorialLocations[2].position.z))
                 .SetIntroTutor(new(buspos.position.x + 14f, 3.66f, buspos.position.z + 6f), assetMan.Get<SoundObject>("ABW/TripIntro"))
                 .SetLootTable(new FieldTripLoot()
@@ -543,6 +552,9 @@ namespace AlexBWFieldtrips
             theMoon.transform.localScale = Vector3.one * 3f;
             theMoon.transform.localPosition = new(930f, -250f, 696f);
             assetMan.Add("FieldTrip", fieldtripLocation);
+            FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierOne);
+            //FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierTwo);
+            //FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierThree);
         }
 
         private GameObject CreateStageBackground(GameObject bgSetTemplate, string name, Texture2D foreground, Texture2D foregroundBottom, Texture2D sky)

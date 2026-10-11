@@ -63,12 +63,6 @@ namespace AlexBWFieldtrips
                 selection = AlexBWFieldTripsPlugin.assetMan.Get<FieldTripObject>("FieldTrip"),
                 weight = 150
             }];
-#else
-            ___tierOneTrips = ___tierOneTrips.AddToArray(new WeightedFieldTrip()
-            {
-                selection = AlexBWFieldTripsPlugin.assetMan.Get<FieldTripObject>("FieldTrip"),
-                weight = 150
-            });
 #endif
         }
 
@@ -79,8 +73,9 @@ namespace AlexBWFieldtrips
                 ___audCampIntro = CoreGameManager.Instance.currentFieldTrip.intro;
         }
         [HarmonyPatch(typeof(MinigameBase), "Pause"), HarmonyPostfix]
-        private static void PauseSoundObject(bool ___paused, string ___midiSong)
+        private static void PauseSoundObject(bool ___paused, string ___midiSong, MinigameName ___minigame)
         {
+            if (___minigame.ToStringExtended() != "SuperWanted64DS" && ___minigame.ToStringExtended() != "DededeCartRacing") return;
             if (___midiSong.Length <= 0)
             {
                 AudioSource[] sources = (AudioSource[])_audioSource.GetValue(MusicManager.Instance);

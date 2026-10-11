@@ -322,6 +322,7 @@ public class Minigame_Wanted : Minigame
         studentToFindUI.gameObject.SetActive(false);
         Destroy(cursorRaycasted?.gameObject);
         ResetCamera();
+        minigameBase.AudioManager.FlushQueue(true);
         base.StartRound();
         if (((minigameBase.CurrentRound - 1) % 10) == 0)
             currentState = WantedState.StudentIntro;

@@ -1,4 +1,5 @@
 ﻿using AlexBWFieldtrips.Wanted;
+using AlexBWFieldtrips.DededeeCartRacing;
 using HarmonyLib;
 using MTM101BaldAPI;
 using MTM101BaldAPI.Registers;
@@ -36,6 +37,23 @@ namespace AlexBWFieldtrips
         {
             if (___minigame == dedede)
                 ___bonusTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_Perfect"), ___perfectBonus);
+        }
+        [HarmonyPatch(typeof(MinigameHUD), nameof(MinigameHUD.SetScore)), HarmonyPrefix]
+        private static bool TimerElasped(int points, MinigameHUD __instance, TMP_Text ___scoreTmp)
+        {
+            var dedede = __instance.GetComponentInParent<Minigame_CartRacing>();
+            if (dedede != null)
+            {
+                var gameTime = dedede.ElaspedTime;
+                /*string text = Mathf.Floor(gameTime % 60f).ToString();
+                if (Mathf.Floor(gameTime % 60f) < 10f)
+                    text = "0" + Mathf.Floor(gameTime % 60f);
+                ___scoreTmp.text = string.Format(Mathf.Floor(gameTime / 60f) + ":" + text, points);*/
+                ___scoreTmp.text = string.Format("{0:D2}:{1:D2}.{2:D3}", gameTime.Minutes, gameTime.Seconds, gameTime.Milliseconds);
+                __instance.StopAllCoroutines();
+                return false;
+            }
+            return true;
         }
 
         [HarmonyPatch(typeof(PitstopGameManager), "AwakeFunction"), HarmonyPostfix]

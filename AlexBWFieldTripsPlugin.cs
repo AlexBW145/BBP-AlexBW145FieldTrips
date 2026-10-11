@@ -137,6 +137,7 @@ namespace AlexBWFieldtrips
                 ], clipMusic: findTutorialMusic);
             yield return "Canvas Cursed"; // Canvas Curse Dedede's Cart Racing
             var kartracing = CreateMinigame<Minigame_CartRacing>("DededeCartRacing", "DededeCartRacing", perfectBonus: 1500);
+            kartracing.minigameHud = kartracing.GetComponentInChildren<MinigameHUD>(true);
             kartracing.audFinished = studentfind.timeBell;
             BasePatches.dedede = EnumExtensions.GetFromExtendedName<MinigameName>("DededeCartRacing");
             var cartPre = new GameObject("CartRacerPre", typeof(CircleCollider2D)).transform;
@@ -156,7 +157,7 @@ namespace AlexBWFieldtrips
             audManCart.audioDevice.minDistance = 25f;
             audManCart.audioDevice.maxDistance = 50f;
             audManCart.ignoreListenerPause = true;
-            audManCart.volumeModifier = 0.35f;
+            audManCart.volumeModifier = 0.55f;
             _disableSubtitles.SetValue(audManCart, true);
             kartracing.cartPre.audMan = audManCart;
             audManCart = cartPre.gameObject.AddComponent<AudioManager>();
@@ -190,6 +191,10 @@ namespace AlexBWFieldtrips
             render.material = AssetFinder.FindOfTypeWithName<Material>("Lit_SpriteStandard_NoBillboard", true);
             render.gameObject.layer = LayerMask.NameToLayer("Overlay");
             kartracing.cartPre.render = render;
+            kartracing.cartPre.hurted = AssetFinder.FindOfTypeWithName<SoundObject>("Explosion", true);
+            kartracing.cartPre.boost = AssetFinder.FindOfTypeWithName<SoundObject>("ChipCrunch", true);
+            kartracing.cartPre.boostDouble = AssetFinder.FindOfTypeWithName<SoundObject>("DrinkElixir", true);
+            kartracing.cartPre.boostTriple = AssetFinder.FindOfTypeWithName<SoundObject>("YTPPickup_2", true);
             //kartracing.gameGOBJ = kartracing.transform.Find("GameCanvas").Find("Game");
             var placehold = Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "1PrizeSprites_12" && x.IsPrefab());
             render.sprite = placehold;
@@ -250,6 +255,7 @@ namespace AlexBWFieldtrips
                 ]);
             kartracing.possibleStage3BGs.AddRange([
                 CreateStageBackground(bgSet, "Stage_3_Camping", AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_3_Camp", "Foreground.png"), (Texture2D)fgbottom.GetComponent<RawImage>().texture, AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_3_Camp", "Background.png")),
+                CreateStageBackground(bgSet, "Stage_3_Laboratory", AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_3_Laboratory", "Foreground.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_3_Laboratory", "ForegroundUnderneath.png"), AssetLoader.TextureFromMod(this, "CartDash_BGs", "Stage_3_Laboratory", "Background.png")),
 
                 ]);
             var ingamestage = new GameObject("Stage1");

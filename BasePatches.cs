@@ -95,8 +95,7 @@ namespace AlexBWFieldtrips
         [HarmonyPatch(typeof(MinigameTutorial), nameof(MinigameTutorial.Initialize)), HarmonyPostfix]
         static void ResultSoundObject(MinigameTutorial __instance)
         {
-            MinigameName game = (MinigameName)_minigame.GetValue(__instance.minigameBase);
-            if (game.ToStringExtended() != "SuperWanted64DS" && game.ToStringExtended() != "DededeCartRacing") return; // Hardcoding because I don't want other mods to overlap.
+            if (__instance.gameObject.name != "MinigameTutorial_SuperWanted64DS(Clone)" && __instance.gameObject.name != "MinigameTutorial_DededeCartRacing(Clone)") return; // Hardcoding because I don't want other mods to overlap.
             LoopingSoundObject musObj = (LoopingSoundObject)_musObj.GetValue(__instance.minigameBase);
             if (string.IsNullOrWhiteSpace(__instance.music) && musObj != null)
                 MusicManager.Instance.QueueFile(musObj, true);

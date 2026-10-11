@@ -80,7 +80,7 @@ namespace AlexBWFieldtrips
 
                 ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandNotice.mp3"), "Vfx_ABW_FunlandTrip", SoundType.Voice, him),
                 ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandPass.mp3"), "Vfx_ABW_BusPass", SoundType.Voice, him),
-                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandIntro.mp3"), "Vfx_ABW_FunlandIntro", SoundType.Voice, him)
+                ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ABW_FunlandIntro.mp3"), "Vfx_ABW_FunlandIntro", SoundType.Voice, him),
                 ],
                 [
                     "WANTED/Drumroll",
@@ -90,7 +90,7 @@ namespace AlexBWFieldtrips
 
                     "ABW/FieldTrip",
                     "ABW/BusPass",
-                    "ABW/TripIntro"
+                    "ABW/TripIntro",
                     ]);
             var mixer = Resources.FindObjectsOfTypeAll<AudioMixerGroup>().Last(x => x.audioMixer.name == "Music" && x.name == "Wav");
             assetMan.Add<LoopingSoundObject>("Music/WANTED", new LoopingSoundObject()
@@ -114,6 +114,7 @@ namespace AlexBWFieldtrips
             });
             assetMan.Add("ABWLand/FloorTex", AssetLoader.TextureFromMod(this, "ABWLandFloor.png"));
             assetMan.Add("ABWLand/Moon", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 2f, "ABWLandMoon.png"));
+            assetMan.Add("ABWLandAmbience", AssetLoader.AudioClipFromMod(this, "ABWLand.wav"));
         }
 
         private IEnumerator PreLoad()
@@ -216,7 +217,7 @@ namespace AlexBWFieldtrips
                 .AddTutorAnimation("ABW_Talk3", new SpriteAnimation(placeholdTalk, 0.75f))
                 .Build();
             _musicObject.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), findTutorialMusic);
-            _minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(studentfind.GetComponent<MinigameBase>())); // See the patches
+            //_minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(studentfind.GetComponent<MinigameBase>())); // See the patches
             yield return "Canvas Cursed"; // Canvas Curse Dedede's Cart Racing
             var kartracing = new MinigameBaseBuilder<Minigame_CartRacing>()
                 .SetName("Minigame_DededeCartRacing")
@@ -415,7 +416,7 @@ namespace AlexBWFieldtrips
                 .AddTutorAnimation("ABW_Talk3", new SpriteAnimation(placeholdTalk, 0.75f))
                 .Build();
             _musicObject.SetValue(kartracingTutorial.GetComponent<MinigameBase>(), assetMan.Get<LoopingSoundObject>("TutorialMusic/CartRace"));
-            _minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(kartracing.GetComponent<MinigameBase>()));
+            //_minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(kartracing.GetComponent<MinigameBase>()));
 
             yield return "Creating Field Trip Location...";
             List<BasicObjectData>
@@ -441,6 +442,8 @@ namespace AlexBWFieldtrips
             DestroyImmediate(function.GetComponent<RuleFreeZone>());
             DestroyImmediate(function.GetComponent<CoverRoomFunction>());
             function.GetComponent<SunlightRoomFunction>().color = sceneObjectOnAccident.skyboxColor;
+            function.GetComponent<AudioSource>().clip = assetMan.Get<AudioClip>("ABWLandAmbience");
+            function.gameObject.AddComponent<AudioLowPassFilter>().cutoffFrequency = 3000f;
             var diamond = ItemMetaStorage.Instance.GetPointsObject(250, true);
             var fieldtripRoomFunction = new FieldTripRoomFunctionBuilder()
                 .SetBusTransform(buspos.position, Direction.South)

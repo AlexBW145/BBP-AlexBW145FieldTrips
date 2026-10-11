@@ -27,6 +27,9 @@
     <Reference Include="MTM101BaldAPI">
       <HintPath>D:\SteamLibrary\steamapps\common\Baldi's Basics Plus\BepInEx\plugins\MTM101BaldAPI.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\SteamLibrary\steamapps\common\Baldi's Basics Plus\BepInEx\plugins\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="PlusStudioLevelFormat">
       <HintPath>..\..\..\SteamLibrary\steamapps\common\Baldi's Basics Plus\BepInEx\plugins\PlusStudioLevelFormat.dll</HintPath>
     </Reference>

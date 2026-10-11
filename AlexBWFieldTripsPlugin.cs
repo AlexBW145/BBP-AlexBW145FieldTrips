@@ -66,7 +66,8 @@ namespace AlexBWFieldtrips
                 { "Mgm_DededeCartRacing_Desc", "Race against 7 other participants for the top 4! Watch out for incoming obstacles!" },
                 { "Mgm_DededeCartRacing_Win", "You've placed {0}, way to go! Now that was a coasting experience!" },
                 { "Mgm_DededeCartRacing_Lose", "You've placed {0}, but the race was already over..." },
-                { "Mgm_DededeCartRacing_Perfect", "No Hit Bonus! +{0} YTPs" }
+                { "Mgm_DededeCartRacing_Perfect", "No Hit Bonus! +{0} YTPs" },
+                { "Mgm_DededeCartRacing_FinalScore", "Final score: {0}\n\n" }
             });
             assetMan.Add<Sprite[]>("Tutorial/WANTED", [
                 AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "6.jpg")

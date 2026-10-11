@@ -272,7 +272,9 @@ public class Minigame_CartRacing : Minigame
                 timer -= minigameBase.DeltaTime;
                 yield return null;
             }
-            if (win)
+            if (scoringMode)
+                minigameBase.SetScore(0);
+            else if (win)
             {
                 if (perfect && !scoringMode)
                     minigameBase.AwardPerfectBonus();

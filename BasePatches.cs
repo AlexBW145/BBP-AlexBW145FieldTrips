@@ -7,6 +7,7 @@ using System;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using System.Text.RegularExpressions;
 
 namespace AlexBWFieldtrips
 {
@@ -44,12 +45,11 @@ namespace AlexBWFieldtrips
             var dedede = __instance.GetComponentInParent<Minigame_CartRacing>();
             if (dedede != null)
             {
-                var gameTime = dedede.ElaspedTime;
-                /*string text = Mathf.Floor(gameTime % 60f).ToString();
-                if (Mathf.Floor(gameTime % 60f) < 10f)
-                    text = "0" + Mathf.Floor(gameTime % 60f);
-                ___scoreTmp.text = string.Format(Mathf.Floor(gameTime / 60f) + ":" + text, points);*/
-                ___scoreTmp.text = string.Format("{0:D2}:{1:D2}.{2:D3}", gameTime.Minutes, gameTime.Seconds, gameTime.Milliseconds);
+                float gameTime = dedede.ElaspedTime,
+                seconds = Mathf.Floor(gameTime % 60f),
+                minutes = Mathf.Floor(gameTime / 60f),
+                miliseconds = (gameTime % 1) * 1000;
+                ___scoreTmp.text = string.Format("{0:00}:{1:00}.{2:000}", minutes, seconds, miliseconds);
                 __instance.StopAllCoroutines();
                 return false;
             }

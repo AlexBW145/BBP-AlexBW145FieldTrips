@@ -51,8 +51,7 @@ public class Minigame_CartRacing : Minigame
     [SerializeField] internal Sprite hurtSpr;
 
     private const int RACERS_COUNT = 7;
-    private Stopwatch stopwatch;
-    internal TimeSpan ElaspedTime => stopwatch.Elapsed;
+    internal float ElaspedTime { get; private set; }
     public static void AddNewRacer(NPC character, RacerData data) => possibleRacers.Add(character.Character, data);
     internal int GetPlacement(CartRacerController racer)
     {
@@ -82,7 +81,6 @@ public class Minigame_CartRacing : Minigame
 
     public override void Initialize(MinigameBase minigameBase, bool scoringMode)
     {
-        stopwatch = new Stopwatch();
         base.Initialize(minigameBase, scoringMode);
         if (!scoringMode)
             minigameHud.HideScore();
@@ -144,7 +142,7 @@ public class Minigame_CartRacing : Minigame
     public override void VirtualReset()
     {
         base.VirtualReset();
-        stopwatch.Reset();
+        ElaspedTime = 0f;
         minigameHud.Reinitialize();
         GameObject.FindObjectsOfType<CartObject>(false).Do(x => Destroy(x.gameObject));
         while (CartRacerController.Racers.Count > 0)
@@ -170,12 +168,13 @@ public class Minigame_CartRacing : Minigame
             StartCoroutine(BoosterSpawner(stage));
             StartCoroutine(HurterSpawner(stage));
         }
-        stopwatch.Start();
     }
 
     public override void VirtualUpdate()
     {
         base.VirtualUpdate();
+        if (!raceFinished)
+            ElaspedTime += minigameBase.DeltaTime;
         minigameHud.SetScore(0);
         var player = CartRacerController.PlayerInstance;
         if (player != null && player.transform.localPosition.x >= stageBounds.xMin && player.transform.localPosition.x < (stageBounds.width - 150f))
@@ -253,7 +252,6 @@ public class Minigame_CartRacing : Minigame
     private void End(bool win)
     {
         raceFinished = true;
-        stopwatch.Stop();
         minigameBase.AudioManager.PlaySingle(audFinished);
         MusicManager.Instance.StopFile();
         MusicManager.Instance.StopMidi();

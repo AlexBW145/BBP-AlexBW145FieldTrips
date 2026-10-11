@@ -2,8 +2,6 @@
 using AlexBWFieldtrips.DededeeCartRacing;
 using HarmonyLib;
 using MTM101BaldAPI;
-using MTM101BaldAPI.Registers;
-using System;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
@@ -97,45 +95,28 @@ namespace AlexBWFieldtrips
         private static FieldInfo
             _musObj = AccessTools.Field(typeof(MinigameBase), "musicObject"),
             _currentSource = AccessTools.Field(typeof(MusicManager), "currentSource"),
-            _audioSource = AccessTools.Field(typeof(MusicManager), "fileSoure");
+            _audioSource = AccessTools.Field(typeof(MusicManager), "fileSoure"),
+            _minigame = AccessTools.DeclaredField(typeof(MinigameBase), "minigame");
         [HarmonyPatch(typeof(MinigameTutorial), nameof(MinigameTutorial.Initialize)), HarmonyPostfix]
         static void ResultSoundObject(MinigameTutorial __instance)
         {
+            MinigameName game = (MinigameName)_minigame.GetValue(__instance.minigameBase);
+            if (game.ToStringExtended() != "SuperWanted64DS" && game.ToStringExtended() != "DededeCartRacing") return; // Hardcoding because I don't want other mods to overlap.
             LoopingSoundObject musObj = (LoopingSoundObject)_musObj.GetValue(__instance.minigameBase);
             if (string.IsNullOrWhiteSpace(__instance.music) && musObj != null)
                 MusicManager.Instance.QueueFile(musObj, true);
         }
-
-        private static bool ChangedNow = false;
-        //[HarmonyPatch(typeof(ModdedHighscoreManager), nameof(ModdedHighscoreManager.Load)), HarmonyPrefix]
-        internal static void NotImplementedWhyDidYou() // This had to fix the high score crash...
+        [HarmonyPatch(typeof(FieldTripEntranceRoomFunction), "Initialize"), HarmonyPostfix]
+        private static void FieldTripLines(bool ___available, ref SoundObject ___audNoPass)
         {
-            if (ChangedNow) return;
-            Tuple<int[,], string[,]> prevhighscores = new Tuple<int[,], string[,]>(ModdedHighscoreManager.tripScores, ModdedHighscoreManager.tripNames);
-            var count = 16 + 256 + (EnumExtensions.GetValues<MinigameName>().Length - 6);
-            ModdedHighscoreManager.tripScores = new int[count, 5];
-            ModdedHighscoreManager.tripNames = new string[count, 5];
-            for (int i = 0; i < 5; i++)
+            if (___available)
             {
-                for (int j = 0; j < count; j++)
+                var trip = CoreGameManager.Instance.currentFieldTrip;
+                if (trip.trip.ToStringExtended() == "AlexBWWorld")
                 {
-                    ModdedHighscoreManager.tripScores[j, i] = 0;
-                    ModdedHighscoreManager.tripNames[j, i] = "Baldi";
+                    ___audNoPass = AlexBWFieldTripsPlugin.assetMan.Get<SoundObject>("ABW/BusPass");
                 }
             }
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 16; j++)
-                {
-                    ModdedHighscoreManager.tripScores[j, i] = prevhighscores.Item1[j, i];
-                    ModdedHighscoreManager.tripNames[j, i] = prevhighscores.Item2[j, i];
-                }
-            }
-            HighScoreManager.Instance.tripScores = ModdedHighscoreManager.tripScores;
-            HighScoreManager.Instance.tripNames = ModdedHighscoreManager.tripNames;
-            ChangedNow = true;
         }
-        [HarmonyPatch(typeof(HighScoreManager), "AddTripScore"), HarmonyPrefix, HarmonyPriority(Priority.Last)]
-        private static bool LastResort(MinigameName minigame) => minigame <= MinigameName.Minigame6;
     }
 }

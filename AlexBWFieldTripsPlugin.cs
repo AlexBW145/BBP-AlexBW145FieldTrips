@@ -54,7 +54,7 @@ namespace AlexBWFieldtrips
             yield return "Templating Templates";
             AssetLoader.LocalizationFromFunction((lang) => new System.Collections.Generic.Dictionary<string, string>()
             {
-                { "Level_Trip_AlexBWWorld", "AlexBW145's Custom Field Trips" },
+                { "Level_Trip_AlexBWWorld", "AlexBW145's Funland" },
 
                 { "Mgm_SuperWanted64DS_Title", "WANTED!" },
                 { "Mgm_SuperWanted64DS_Desc", "Looks like the students are scattered around, but only one is different from the rest!" },

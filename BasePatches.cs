@@ -106,7 +106,22 @@ namespace AlexBWFieldtrips
             if (__instance.gameObject.name != "MinigameTutorial_SuperWanted64DS(Clone)" && __instance.gameObject.name != "MinigameTutorial_DededeCartRacing(Clone)") return; // Hardcoding because I don't want other mods to overlap.
             LoopingSoundObject musObj = (LoopingSoundObject)_musObj.GetValue(__instance.minigameBase);
             if (string.IsNullOrWhiteSpace(__instance.music) && musObj != null)
+            {
                 MusicManager.Instance.QueueFile(musObj, true);
+                if (musObj == AlexBWFieldTripsPlugin.assetMan.Get<LoopingSoundObject>("TutorialMusic/CartRace"))
+                    AlexBWFieldTripsPlugin.LoopMusic(MusicManager.Instance, 0.324f);
+            }
+        }
+        [HarmonyPatch(typeof(MusicManager), nameof(MusicManager.StopFile)), HarmonyPostfix]
+        private static void StopLoop(AudioSource[] ___fileSoure) // Those are a bummer to deal with.
+        {
+            if (AlexBWFieldTripsPlugin.loopEnumerator != null)
+            {
+                AlexBWFieldTripsPlugin.Instance.StopCoroutine(AlexBWFieldTripsPlugin.loopEnumerator);
+                ___fileSoure[0].time = 0f;
+                ___fileSoure[1].time = 0f;
+                AlexBWFieldTripsPlugin.loopEnumerator = null;
+            }
         }
         [HarmonyPatch(typeof(FieldTripEntranceRoomFunction), "Initialize"), HarmonyPostfix]
         private static void FieldTripLines(bool ___available, ref SoundObject ___audNoPass)

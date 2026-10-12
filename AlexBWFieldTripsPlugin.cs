@@ -28,7 +28,7 @@ using UnityEngine.UI;
 namespace AlexBWFieldtrips
 {
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
-    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.0.0.0")]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.2.0.1")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("thumbly.baldiplus.fieldtripAPI", BepInDependency.DependencyFlags.HardDependency)]
     [BepInProcess("BALDI.exe")]
@@ -109,6 +109,12 @@ namespace AlexBWFieldtrips
                 name = "WANTED_MinigameTutorial",
                 mixer = mixer
             });
+            assetMan.Add<LoopingSoundObject>("Music/CartRace", new LoopingSoundObject()
+            {
+                clips = [AssetLoader.AudioClipFromMod(this, "CoastingCartRacing.mp3")],
+                name = "CoastingCartRace_Minigame",
+                mixer = mixer
+            });
             assetMan.Add<LoopingSoundObject>("TutorialMusic/CartRace", new LoopingSoundObject()
             {
                 clips = [AssetLoader.AudioClipFromMod(this, "Explaination-CoastingCartRacing.mp3")],
@@ -119,6 +125,9 @@ namespace AlexBWFieldtrips
             assetMan.Add("ABWLand/FloorTex", AssetLoader.TextureFromMod(this, "ABWLandFloor.png"));
             assetMan.Add("ABWLand/Moon", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 2f, "ABWLandMoon.png"));
             assetMan.Add("ABWLandAmbience", AssetLoader.AudioClipFromMod(this, "ABWLand.wav"));
+            var himpivot = new Vector2(0.5f, 0.325f);
+            assetMan.Add("ABW/Idle", AssetLoader.SpriteFromMod(this, himpivot, 100f, "ABW_Idle.png"));
+            assetMan.Add("ABW/Talk", AssetLoader.SpriteFromMod(this, himpivot, 100f, "ABW_Speak.png"));
         }
 
         private IEnumerator PreLoad()
@@ -228,6 +237,7 @@ namespace AlexBWFieldtrips
                 .SetEnum("DededeCartRacing")
                 .SetTitle("Mgm_DededeCartRacing_Title", "Mgm_DededeCartRacing_Desc")
                 .SetEndText("Mgm_DededeCartRacing_Win", "Mgm_DededeCartRacing_Lose")
+                .SetMusic(assetMan.Get<LoopingSoundObject>("Music/CartRace"))
                 .SetWinBonus(1500)
                 .Build().GetComponent<Minigame_CartRacing>();
             kartracing.minigameHud = Instantiate(FieldTripsAPI.minigameHudPref, kartracing.transform.Find("GameCanvas").Find("Game"));
@@ -251,7 +261,7 @@ namespace AlexBWFieldtrips
             audManCart.audioDevice.minDistance = 25f;
             audManCart.audioDevice.maxDistance = 50f;
             audManCart.ignoreListenerPause = true;
-            audManCart.volumeModifier = 0.55f;
+            audManCart.volumeModifier = 0.75f;
             _disableSubtitles.SetValue(audManCart, true);
             kartracing.cartPre.audMan = audManCart;
             audManCart = cartPre.gameObject.AddComponent<AudioManager>();
@@ -469,7 +479,7 @@ namespace AlexBWFieldtrips
                 .SetBusTransform(buspos.position, Direction.South)
                 .SetPitstopItemOffset(new Vector3(170f, 0f, -170f))
                 .SetFunctionGameobject(function.gameObject)
-                .SetTutorialBaldiSprite(placehold)
+                .SetTutorialBaldiSprite(assetMan.Get<Sprite>("ABW/Idle"))
                 .SetIntroTutor(new(buspos.position.x + 14f, 3.66f, buspos.position.z + 6f), null)
                 .AddMinigameTrigger(new MinigameSettings(studentfind.GetComponent<MinigameBase>(), gamelocations[0].position + (Vector3.up * 5f)))
                 .AddMinigameTutorialBaldi(studentfindTutorial, new(tutorialLocations[0].position.x, 5f, tutorialLocations[0].position.z))
@@ -548,7 +558,7 @@ namespace AlexBWFieldtrips
             var fieldtripLocation = new FieldTripBuilder()
                 .SetName("SelfInsertsSelfMadeFieldTrips")
                 .SetEnum("AlexBWWorld")
-                .SetBaldiSprites(placehold, placehold)
+                .SetBaldiSprites(assetMan.Get<Sprite>("ABW/Idle"), assetMan.Get<Sprite>("ABW/Talk"))
                 .SetSound(assetMan.Get<SoundObject>("ABW/FieldTrip"))
                 .SetSkybox(sceneObjectOnAccident.skybox)
                 .SetHubRoom(tripHub)
@@ -619,6 +629,38 @@ namespace AlexBWFieldtrips
             _tooltipKey = AccessTools.DeclaredField(typeof(MinigameTutorial), "tooltipKey"),
             _positionAndScale = AccessTools.DeclaredField(typeof(MinigameTutorial), "positionAndScale"),
             _audVoice = AccessTools.DeclaredField(typeof(MinigameTutorial), "audVoice");
+
+        private static FieldInfo
+            _currentSource = AccessTools.Field(typeof(MusicManager), "currentSource"),
+            _audioSource = AccessTools.Field(typeof(MusicManager), "fileSoure"),
+            _filePlaying = AccessTools.Field(typeof(MusicManager), "filePlaying");
+
+        internal static IEnumerator loopEnumerator;
+        internal static void LoopMusic(MusicManager instance, float loopStart = 0f)
+        {
+            AudioSource[] sources = (AudioSource[])_audioSource.GetValue(instance);
+            int source = (int)_currentSource.GetValue(instance);
+            IEnumerator Loop()
+            {
+                float elasped = sources[source].timeSamples - 1f;
+                bool actuallyPlaying = (bool)_filePlaying.GetValue(instance);
+                while (actuallyPlaying)
+                {
+                    while (elasped <= sources[source].timeSamples)
+                    {
+                        elasped = sources[source].timeSamples - 1f;
+                        yield return null;
+                    }
+                    sources[source].time = loopStart;
+                    elasped = sources[source].timeSamples - 1f;
+                    actuallyPlaying = (bool)_filePlaying.GetValue(instance);
+                    yield return null;
+                }
+                yield break;
+            }
+            loopEnumerator = Loop();
+            Instance.StartCoroutine(loopEnumerator);
+        }
     }
 
     [Serializable, Obsolete("Unavailable in FieldTripsAPI Port", true)]

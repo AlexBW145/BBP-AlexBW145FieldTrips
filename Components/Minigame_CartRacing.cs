@@ -142,6 +142,11 @@ public class Minigame_CartRacing : Minigame
     {
         Destroy(camera.gameObject);
     }
+    public override void Prepare()
+    {
+        base.Prepare();
+        AlexBWFieldTripsPlugin.LoopMusic(MusicManager.Instance, 82.087f);
+    }
 
     public override void VirtualReset()
     {
@@ -742,7 +747,7 @@ internal class CartRacerController : MonoBehaviour
                 speed += REG_SPEED * (BOOST_SPEED * minigame.minigameBase.DeltaTime);
                 speed = Mathf.Clamp(speed, SLOW_SPEED, REG_SPEED * 10f);
             }
-            else if (distance <= (minigame.stageBounds.xMin * 8) && rubber)
+            else if (distance <= (minigame.stageBounds.xMin * 15f) && rubber)
                 rubber = false;
         }
     }

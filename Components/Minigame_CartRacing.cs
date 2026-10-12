@@ -73,7 +73,7 @@ public class Minigame_CartRacing : Minigame
         for (int i = 0; i < racersNonHash.Count; i++)
             racersPos[i] = Array.IndexOf(placementPos, placementPre[i]);
 #if DEBUG
-        if (raceFinished)
+        if (raceFinished && racer.Player)
         {
             foreach (var i in racersPos)
                 UnityEngine.Debug.Log($"Placement: {i}");
@@ -153,7 +153,8 @@ public class Minigame_CartRacing : Minigame
         base.VirtualReset();
         ElaspedTime = 0f;
         minigameHud.Reinitialize();
-        GameObject.FindObjectsOfType<CartObject>(false).Do(x => Destroy(x.gameObject));
+        GameObject.FindObjectsOfType<CartObject>(true).DoIf(x => stages.Contains(x.transform.parent?.gameObject), x => Destroy(x.gameObject));
+        CartObject.ToCallVirtually.Clear();
         while (CartRacerController.Racers.Count > 0)
         {
             var racer = CartRacerController.Racers.First();
@@ -195,6 +196,11 @@ public class Minigame_CartRacing : Minigame
         camera.transform.position = camPos;
         foreach (var racer in CartRacerController.Racers)
             racer.VirtualUpdate();
+        for (int i = 0; i < CartObject.ToCallVirtually.Count; i++)
+        {
+            if (i >= CartObject.ToCallVirtually.Count) break;
+            CartObject.ToCallVirtually[i]?.VirtualUpdate();
+        }
         foreach (var track in trackers)
         {
             int stageIndex = stages.IndexOf(track.Key.transform.parent.gameObject);
@@ -204,12 +210,23 @@ public class Minigame_CartRacing : Minigame
             track.Value.anchoredPosition = pos;
         }
     }
+    private void LateUpdate()
+    {
+        foreach (var racer in CartRacerController.Racers)
+            racer.VirtualLateUpdate();
+    }
+
+    private void FixedUpdate()
+    {
+        foreach (var racer in CartRacerController.Racers)
+            racer.VirtualFixedUpdate();
+    }
 
     private IEnumerator BoosterSpawner(GameObject stage)
     {
         while (!raceFinished)
         {
-            float timer = UnityEngine.Random.Range(0.1f, 0.6f);
+            float timer = UnityEngine.Random.Range(0.05f, 0.2f);
             while (timer > 0f && !raceFinished)
             {
                 timer -= minigameBase.DeltaTime;
@@ -217,7 +234,7 @@ public class Minigame_CartRacing : Minigame
             }
             if (raceFinished)
                 yield break;
-            for (int i = 0; i < UnityEngine.Random.Range(1, 9); i++)
+            for (int i = 0; i < UnityEngine.Random.Range(1, 10); i++)
                 CreateBooster(stage);
             yield return null;
         }
@@ -226,7 +243,7 @@ public class Minigame_CartRacing : Minigame
     {
         while (!raceFinished)
         {
-            float timer = UnityEngine.Random.Range(0.1f, 0.9f);
+            float timer = UnityEngine.Random.Range(0.075f, 0.2f);
             while (timer > 0f && !raceFinished)
             {
                 timer -= minigameBase.DeltaTime;
@@ -313,7 +330,7 @@ public class Minigame_CartRacing : Minigame
             GlobalCam.Instance.Transition(UiTransition.Dither, 0.01666667f);
         curStage = stage;
         for (int i = 0; i < stages.Count; i++)
-            stages[i].transform.localPosition = (i == stage) ? Vector3.zero : (Vector3.up * ((stageBounds.height * 3f) * (i + 1)));
+            stages[i].gameObject.SetActive(i == stage); //transform.localPosition = (i == stage) ? Vector3.zero : (Vector3.up * ((stageBounds.height * 3f) * (i + 1)));
         ChangeBG(stage);
     }
     private void ChangeBG(int stage = 0)
@@ -373,10 +390,11 @@ public class Minigame_CartRacing : Minigame
     private void CreateBooster(GameObject stage)
     {
         var booster = Instantiate(boostPre, stage.transform, false);
-        booster.transform.localPosition = new Vector2(UnityEngine.Random.Range(stageBounds.xMin * 5f, stageBounds.xMax), UnityEngine.Random.Range(stageBounds.yMin, stageBounds.yMax));
+        while (booster.transform.localPosition == Vector3.zero || CheckBounds(booster.transform))
+            booster.transform.localPosition = new Vector2(UnityEngine.Random.Range(stageBounds.xMin * 5f, stageBounds.xMax), UnityEngine.Random.Range(stageBounds.yMin, stageBounds.yMax));
         var speed = UnityEngine.Random.Range(10f, 20f);
         booster.Initialize(this, boosterSprs[UnityEngine.Random.Range(0, boosterSprs.Count)], speed);
-        if (UnityEngine.Random.Range(0, 20) < 2)
+        if (UnityEngine.Random.Range(0, 10) < 3)
         {
             Vector2 otherPos = booster.transform.localPosition;
             booster = Instantiate(boostPre, stage.transform, false);
@@ -387,8 +405,19 @@ public class Minigame_CartRacing : Minigame
     private void CreateHurter(GameObject stage)
     {
         var hurter = Instantiate(hurtPre, stage.transform, false);
-        hurter.transform.localPosition = new Vector2(UnityEngine.Random.Range(stageBounds.xMin * 5f, stageBounds.xMax), UnityEngine.Random.Range(stageBounds.yMin, stageBounds.yMax));
+        while (hurter.transform.localPosition == Vector3.zero || CheckBounds(hurter.transform))
+            hurter.transform.localPosition = new Vector2(UnityEngine.Random.Range(stageBounds.xMin * 5f, stageBounds.xMax), UnityEngine.Random.Range(stageBounds.yMin, stageBounds.yMax));
         hurter.Initialize(this, hurtSpr, UnityEngine.Random.Range(10f, 20f));
+    }
+    private bool CheckBounds(Transform cartobject)
+    {
+        foreach (var racer in CartRacerController.Racers)
+        {
+            if (racer.transform.parent != cartobject.parent) continue;
+            if (racer.CamBounds.Contains(cartobject.localPosition))
+                return true;
+        }
+        return false;
     }
 
     internal void PerfectFailure() => perfect = false;
@@ -448,6 +477,8 @@ internal class CartRacerController : MonoBehaviour
     private bool beenMoved, rubber;
     private float moveCool;
     private Vector2 FlatPosition => new Vector2(transform.localPosition.x, transform.localPosition.y);
+    private Rect camBounds = new Rect(-45f, -150f, 250f, 300f);
+    internal Rect CamBounds => camBounds;
 
     public void Initialize(Minigame_CartRacing minigame, RacerData data, bool isPlayer = false, float initialplacement = 0f)
     {
@@ -489,8 +520,10 @@ internal class CartRacerController : MonoBehaviour
     }
 
     private bool pausedAudMans = false;
-    private void LateUpdate()
+    internal void VirtualLateUpdate()
     {
+        camBounds.x = -45f + transform.localPosition.x;
+        camBounds.y = -150f + transform.localPosition.y;
         if (!(minigame.minigameBase.DeltaTime > 0f))
         {
             if (!pausedAudMans)
@@ -622,28 +655,27 @@ internal class CartRacerController : MonoBehaviour
     private RaycastHit2D[] _hits = new RaycastHit2D[32];
     private int hitCount;
     private LayerMask touchLayers = LayerMask.GetMask("Default");
-    private void FixedUpdate()
+    internal void VirtualFixedUpdate()
     {
         if (isPlayer) return;
-        hitCount = Physics2D.RaycastNonAlloc(transform.position, transform.right, _hits, 240f, touchLayers);
+        hitCount = Physics2D.RaycastNonAlloc(transform.position, transform.right, _hits, 240f + speed, touchLayers);
         if ((minigame?.minigameBase.DeltaTime ?? 0f) != 0f && curDifficulty != RacerDifficulty.Easy)
         {
             for (int i = 0; i < hitCount; i++)
             {
                 var hit = _hits[i];
                 var hurter = hit.transform.GetComponent<CartHurter>();
-                if (hurter != null && (curDifficulty == RacerDifficulty.Hard || hit.distance > 20f))
+                if (hurter != null && hit.distance > (90f + speed))
                 {
                     bool isBelow = transform.localPosition.y < hit.transform.localPosition.y;
-                    FindPath(hit.transform.localPosition + ((isBelow ? Vector3.down : Vector3.up) * Mathf.Max(10f, Mathf.Abs(hit.transform.localPosition.y))));
-                    if (curDifficulty == RacerDifficulty.Hard && hit.distance < 180f)
+                    FindPath(hit.transform.localPosition + ((isBelow ? Vector3.down : Vector3.up) * Mathf.Max(10f + speed, Mathf.Abs(hit.transform.localPosition.y))));
+                    if (curDifficulty == RacerDifficulty.Hard && hit.distance < (180f + speed))
                         moveCool--;
                     continue;
                 }
                 var booster = hit.transform.GetComponent<CartBooster>();
                 if (booster != null && ((curDifficulty == RacerDifficulty.Hard && (destinationPoints.Count <= 0 || hit.distance < destinationPoints.Last().x)) || moveCool <= 0f))
                 {
-                    destinationPoints.Add(hit.transform.localPosition);
                     FindPath(hit.transform.localPosition, false);
                     ResetCooldown();
                 }
@@ -663,14 +695,13 @@ internal class CartRacerController : MonoBehaviour
                 if (hurter != null)
                 {
                     bool isBelow = transform.localPosition.y < hit.transform.localPosition.y;
-                    FindPath(hit.transform.localPosition + ((isBelow ? Vector3.down : Vector3.up) * Mathf.Max(10f, Mathf.Abs(hit.transform.localPosition.y))));
+                    FindPath(hit.transform.localPosition + ((isBelow ? Vector3.down : Vector3.up) * Mathf.Max(10f + speed, Mathf.Abs(hit.transform.localPosition.y))));
                     continue;
                 }
                 if (targetFood) continue;
                 var booster = hit.transform.GetComponent<CartBooster>();
-                if (booster != null && hit.distance < 180f)
+                if (booster != null && hit.distance < (180f + speed))
                 {
-                    destinationPoints.Add(transform.localPosition);
                     FindPath(hit.transform.localPosition, false);
                     targetFood = true;
                 }
@@ -704,13 +735,8 @@ internal class CartRacerController : MonoBehaviour
     {
         if (!minigame.stageBounds.Contains(targetPos))
             targetPos = targetPos.y < minigame.stageBounds.yMin ? (targetPos + (Vector2.down * 90f)) : (targetPos + (Vector2.up * 90f));
-        if (destinationPoints.Count > 0)
-        {
-            if (!targeting)
-                destinationPoints[destinationPoints.Count - 1] = targetPos;
-            else
-                destinationPoints[0] = targetPos;
-        }
+        if (targeting && destinationPoints.Count > 0)
+            destinationPoints[0] = targetPos;
         else
             destinationPoints.Add(targetPos);
     }
@@ -739,15 +765,15 @@ internal class CartRacerController : MonoBehaviour
             int 
                 stageIndex = minigame.stages.IndexOf(transform.parent.gameObject),
                 plrstageIndex = minigame.stages.IndexOf(PlayerInstance.transform.parent.gameObject);
-            float distance = ((PlayerInstance.transform.localPosition.x + (plrstageIndex * minigame.stageBounds.xMax)) - (transform.localPosition.x + (stageIndex * minigame.stageBounds.xMax)));
-            if (distance > (minigame.stageBounds.xMax / 5f)
+            float distance = (PlayerInstance.transform.localPosition.x + (plrstageIndex * minigame.stageBounds.xMax)) - (transform.localPosition.x + (stageIndex * minigame.stageBounds.xMax));
+            if (distance > (minigame.stageBounds.xMax / 12f)
                 && minigame.GetPlacement(this) > minigame.GetPlacement(PlayerInstance)) // Rubberbanding
             {
                 rubber = true;
-                speed += REG_SPEED * (BOOST_SPEED * minigame.minigameBase.DeltaTime);
+                speed += BOOST_SPEED * (SLOW_SPEED * minigame.minigameBase.DeltaTime);
                 speed = Mathf.Clamp(speed, SLOW_SPEED, REG_SPEED * 10f);
             }
-            else if (distance <= (minigame.stageBounds.xMin * 15f) && rubber)
+            else if (distance <= (minigame.stageBounds.xMin * 3f) && rubber)
                 rubber = false;
         }
     }
@@ -844,20 +870,33 @@ public class CartObject : MonoBehaviour
     protected Minigame_CartRacing minigame;
     [SerializeField] internal SpriteRenderer spriteRenderer;
     private float speed;
+    internal static readonly List<CartObject> ToCallVirtually = new List<CartObject>();
     public virtual void Initialize(Minigame_CartRacing game, Sprite sprite, float speed)
     {
         minigame = game;
         spriteRenderer.sprite = sprite;
         spriteRenderer.size = Vector2.one * 3f;
         this.speed = speed;
+        ToCallVirtually.Add(this);
+    }
+    private void OnDestroy()
+    {
+        ToCallVirtually.Remove(this);
     }
 
-    private void Update()
+    internal void VirtualUpdate() // Alternative doings if I want to disable stage's game object and reduce lag.
     {
+        if (minigame == null) return;
         transform.localPosition += Vector3.left * (speed * minigame.minigameBase.DeltaTime);
         if (!minigame.stageBounds.Contains(transform.localPosition))
+        {
             Destroy(gameObject);
+            OnDestroy();
+        }
     }
+
+    private void OnBecameInvisible() => spriteRenderer.enabled = false;
+    private void OnBecameVisible() => spriteRenderer.enabled = true;
 }
 
 internal class CartBooster : CartObject

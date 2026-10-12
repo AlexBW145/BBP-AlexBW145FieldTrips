@@ -34,7 +34,7 @@ namespace AlexBWFieldtrips
     [BepInProcess("BALDI.exe")]
     public class AlexBWFieldTripsPlugin : BaseUnityPlugin
     {
-        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "0.0.0.0";
+        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.0.0";
         public static AlexBWFieldTripsPlugin Instance { get; private set; }
         public static readonly AssetManager assetMan = new AssetManager();
 
@@ -128,6 +128,8 @@ namespace AlexBWFieldtrips
             var himpivot = new Vector2(0.5f, 0.325f);
             assetMan.Add("ABW/Idle", AssetLoader.SpriteFromMod(this, himpivot, 100f, "ABW_Idle.png"));
             assetMan.Add("ABW/Talk", AssetLoader.SpriteFromMod(this, himpivot, 100f, "ABW_Speak.png"));
+            assetMan.Add("ABW/Tutorial1", AssetLoader.SpritesFromSpritesheet(19, 1, 1f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ABW_Tutorial1.png")));
+            assetMan.Add("ABW/Tutorial2", AssetLoader.SpritesFromSpritesheet(19, 1, 1f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ABW_Tutorial2.png")));
         }
 
         private IEnumerator PreLoad()
@@ -215,7 +217,7 @@ namespace AlexBWFieldtrips
             studentfind.doorPre = AssetFinder.FindOfTypeWithName<StandardDoor>("ClassDoor_Standard", true);
             var findTutorialMusic = assetMan.Get<LoopingSoundObject>("TutorialMusic/WANTED");
             Sprite[] tutorialScreens = assetMan.Get<Sprite[]>("Tutorial/WANTED");
-            Sprite[] placeholdTalk = [assetMan.Get<Sprite>("ABWLand/Moon")];
+            Sprite[] me1 = assetMan.Get<Sprite[]>("ABW/Tutorial1"), me2 = assetMan.Get<Sprite[]>("ABW/Tutorial2");
             var studentfindTutorial = new MinigameTutorialBuilder()
                 .SetName("MinigameTutorial_SuperWanted64DS")
                 .AddScreen(new TutorialScreenInfo(tutorialScreens[0], new(130f, -212f, 1.5f), "Are you ready to search for some unique students?\nIt's time for WANTED!"))
@@ -225,9 +227,8 @@ namespace AlexBWFieldtrips
                 .AddScreen(new(tutorialScreens[4], new(90f, -50f, 1f), "In every next rounds, more students will appear\nso be precise on where you are searching."))
                 .AddScreen(new TutorialScreenInfo(tutorialScreens[5], new(30f, 110f, 0.5f), "In scoring mode, future rounds are made to be cramped!"))
                 .SetMidi("")
-                .AddTutorAnimation("ABW_Talk1", new SpriteAnimation(placeholdTalk, 1.4f))
-                .AddTutorAnimation("ABW_Talk2", new SpriteAnimation(placeholdTalk, 1.4f))
-                .AddTutorAnimation("ABW_Talk3", new SpriteAnimation(placeholdTalk, 0.75f))
+                .AddTutorAnimation("ABW_Talk1", new SpriteAnimation(17, me1))
+                .AddTutorAnimation("ABW_Talk2", new SpriteAnimation(15, me2))
                 .Build();
             _musicObject.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), findTutorialMusic);
             //_minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(studentfind.GetComponent<MinigameBase>())); // See the patches
@@ -396,7 +397,7 @@ namespace AlexBWFieldtrips
             booster.transform.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
             kartracing.boostPre = booster.AddComponent<CartBooster>();
             booster.GetComponent<CircleCollider2D>().isTrigger = true;
-            booster.GetComponent<CircleCollider2D>().radius = 1.25f;
+            booster.GetComponent<CircleCollider2D>().radius = 1.5f;
             render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             render.transform.SetParent(booster.transform, false);
             render.material = lit_nobillboard;
@@ -408,7 +409,7 @@ namespace AlexBWFieldtrips
             hurter.transform.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
             kartracing.hurtPre = hurter.AddComponent<CartHurter>();
             hurter.GetComponent<CircleCollider2D>().isTrigger = true;
-            hurter.GetComponent<CircleCollider2D>().radius = 1.25f;
+            hurter.GetComponent<CircleCollider2D>().radius = 1.5f;
             render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             render.transform.SetParent(hurter.transform, false);
             render.material = lit_nobillboard;
@@ -441,9 +442,8 @@ namespace AlexBWFieldtrips
                 .AddScreen(new TutorialScreenInfo(placehold, default, "There are three stages in total!\nWhen someone reaches to the end, the race ends!"))
                 .AddScreen(new TutorialScreenInfo(placehold, default, "In scoring mode, you are after the clock for the best record!"))
                 .SetMidi("")
-                .AddTutorAnimation("ABW_Talk1", new SpriteAnimation(placeholdTalk, 1.4f))
-                .AddTutorAnimation("ABW_Talk2", new SpriteAnimation(placeholdTalk, 1.4f))
-                .AddTutorAnimation("ABW_Talk3", new SpriteAnimation(placeholdTalk, 0.75f))
+                .AddTutorAnimation("ABW_Talk1", new SpriteAnimation(17, me1))
+                .AddTutorAnimation("ABW_Talk2", new SpriteAnimation(15, me2))
                 .Build();
             _musicObject.SetValue(kartracingTutorial.GetComponent<MinigameBase>(), assetMan.Get<LoopingSoundObject>("TutorialMusic/CartRace"));
             //_minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(kartracing.GetComponent<MinigameBase>()));
@@ -474,6 +474,7 @@ namespace AlexBWFieldtrips
             function.GetComponent<SunlightRoomFunction>().color = sceneObjectOnAccident.skyboxColor;
             function.GetComponent<AudioSource>().clip = assetMan.Get<AudioClip>("ABWLandAmbience");
             function.gameObject.AddComponent<AudioLowPassFilter>().cutoffFrequency = 3000f;
+            function.AddFunction(function.gameObject.AddComponent<SpaceWorldRoomFunction>());
             var diamond = ItemMetaStorage.Instance.GetPointsObject(250, true);
             var fieldtripRoomFunction = new FieldTripRoomFunctionBuilder()
                 .SetBusTransform(buspos.position, Direction.South)
@@ -660,6 +661,47 @@ namespace AlexBWFieldtrips
             }
             loopEnumerator = Loop();
             Instance.StartCoroutine(loopEnumerator);
+        }
+    }
+
+    internal class SpaceWorldRoomFunction : RoomFunction
+    {
+        [SerializeField] internal float frequency = 1500f;
+        private HashSet<PlayerManager> players = new HashSet<PlayerManager>();
+        public override void OnPlayerEnter(PlayerManager player)
+        {
+            base.OnPlayerEnter(player);
+            CoreGameManager.Instance.GetCamera(player.playerNumber).listenerTra.gameObject.GetOrAddComponent<AudioLowPassFilter>().cutoffFrequency = frequency;
+            players.Add(player);
+        }
+        public override void OnPlayerExit(PlayerManager player)
+        {
+            base.OnPlayerExit(player);
+            players.Remove(player);
+            Destroy(CoreGameManager.Instance.GetCamera(player.playerNumber).listenerTra.GetComponent<AudioLowPassFilter>());
+        }
+        private void LateUpdate()
+        {
+            if (room.ec.PlayerTimeScale == 0f)
+            {
+                for (int i = 0; i < CoreGameManager.Instance.setPlayers; i++)
+                {
+                    if (!players.Contains(CoreGameManager.Instance.GetPlayer(i))) continue;
+                    var listenerTra = CoreGameManager.Instance.GetCamera(i).listenerTra;
+                    var component = listenerTra.GetComponent<AudioLowPassFilter>();
+                    if (component != null) component.enabled = false;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < CoreGameManager.Instance.setPlayers; i++)
+                {
+                    if (!players.Contains(CoreGameManager.Instance.GetPlayer(i))) continue;
+                    var listenerTra = CoreGameManager.Instance.GetCamera(i).listenerTra;
+                    var component = listenerTra.GetComponent<AudioLowPassFilter>();
+                    if (component != null) component.enabled = true;
+                }
+            }
         }
     }
 

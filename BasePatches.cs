@@ -237,7 +237,7 @@ namespace AlexBWFieldtrips
             }
             return true;
         }
-        [HarmonyPatch(typeof(ModdedFieldTripScoreManager), "Save"), HarmonyPrefix]
+        [HarmonyPatch(typeof(ModdedFieldTripScoreManager), "Save"), HarmonyPrefix, HarmonyPriority(Priority.First)]
         private static void PreSaveScore(ModdedFieldTripScoreManager __instance, out List<CartMinigameScore> __state)
         {
             List<CartMinigameScore> cartScores = __instance.tripScores.Where(x => x is CartMinigameScore).Select(x => x as CartMinigameScore).ToList();
@@ -255,7 +255,7 @@ namespace AlexBWFieldtrips
             File.WriteAllText(path, RijndaelEncryption.Encrypt(JsonConvert.SerializeObject((object)moddedFieldTripData), "99"));
             __state = cartScores;
         }
-        [HarmonyPatch(typeof(ModdedFieldTripScoreManager), "Save"), HarmonyPostfix]
+        [HarmonyPatch(typeof(ModdedFieldTripScoreManager), "Save"), HarmonyPostfix, HarmonyPriority(Priority.First)]
         private static void PostSaveScore(ModdedFieldTripScoreManager __instance, List<CartMinigameScore> __state)
         {
             __instance.tripScores.AddRange(__state);

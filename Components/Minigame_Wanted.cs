@@ -224,9 +224,14 @@ public class Minigame_Wanted : Minigame
                     currentState = WantedState.StudentIntro;
                     if (minigameBase.CurrentRound >= (scoringMode ? 999 : 9))
                     {
-                        if (!scoringMode && perfect)
-                            minigameBase.AwardPerfectBonus();
-                        minigameBase.Win();
+                        if (scoringMode)
+                            minigameBase.SetScore(score);
+                        else
+                        {
+                            if (perfect)
+                                minigameBase.AwardPerfectBonus();
+                            minigameBase.Win();
+                        }
                     }
                     else
                         minigameBase.AdvanceRound(0.5f);

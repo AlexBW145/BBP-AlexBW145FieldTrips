@@ -93,6 +93,9 @@ namespace AlexBWFieldtrips
                     "ABW/BusPass",
                     "ABW/TripIntro",
                     ]);
+            var tracktex = AssetLoader.TextureFromMod(this, "cartdash_track.png");
+            var track = Sprite.Create(tracktex, new Rect(0f, 0f, tracktex.width, tracktex.height), Vector2.one / 2f, 1f, 0, SpriteMeshType.FullRect, new Vector4(0f, 4f, 0f, 4f));
+            assetMan.Add("CartRace/PositionUI", track);
             var mixer = Resources.FindObjectsOfTypeAll<AudioMixerGroup>().Last(x => x.audioMixer.name == "Music" && x.name == "Wav");
             assetMan.Add<LoopingSoundObject>("Music/WANTED", new LoopingSoundObject()
             {
@@ -383,7 +386,7 @@ namespace AlexBWFieldtrips
             booster.transform.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
             kartracing.boostPre = booster.AddComponent<CartBooster>();
             booster.GetComponent<CircleCollider2D>().isTrigger = true;
-            booster.GetComponent<CircleCollider2D>().radius = 1f;
+            booster.GetComponent<CircleCollider2D>().radius = 1.25f;
             render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             render.transform.SetParent(booster.transform, false);
             render.material = lit_nobillboard;
@@ -395,7 +398,7 @@ namespace AlexBWFieldtrips
             hurter.transform.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
             kartracing.hurtPre = hurter.AddComponent<CartHurter>();
             hurter.GetComponent<CircleCollider2D>().isTrigger = true;
-            hurter.GetComponent<CircleCollider2D>().radius = 1f;
+            hurter.GetComponent<CircleCollider2D>().radius = 1.25f;
             render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             render.transform.SetParent(hurter.transform, false);
             render.material = lit_nobillboard;
@@ -403,6 +406,22 @@ namespace AlexBWFieldtrips
             render.drawMode = SpriteDrawMode.Sliced;
             kartracing.hurtPre.spriteRenderer = render;
             kartracing.hurtSpr = AssetFinder.FindOfTypeWithName<Sprite>("Campfire_Sheet_18", true);
+            var gameCanvas = kartracing.minigameHud.transform.parent;
+            var trackPos = new GameObject("PositionTracker", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            trackPos.sprite = assetMan.Get<Sprite>("CartRace/PositionUI");
+            trackPos.type = Image.Type.Tiled;
+            trackPos.pixelsPerUnitMultiplier = 20f;
+            trackPos.rectTransform.SetParent(gameCanvas, false);
+            trackPos.rectTransform.anchorMin = trackPos.rectTransform.anchorMax = trackPos.rectTransform.pivot = Vector2.one;
+            trackPos.rectTransform.sizeDelta = new(55f, 15f);
+            trackPos.rectTransform.anchoredPosition = new(425f, 300f);
+            kartracing.trackerTransform = trackPos.rectTransform;
+            var trackPlayer = new GameObject("TrackedController", typeof(RectTransform), typeof(RawImage)).GetComponent<RectTransform>();
+            trackPlayer.SetParent(trackPos.rectTransform, false);
+            trackPlayer.sizeDelta = Vector2.one * 5f;
+            trackPlayer.anchoredPosition = Vector2.zero;
+            kartracing.trackerPre = trackPlayer;
+            trackPlayer.gameObject.SetActive(false);
             var kartracingTutorial = new MinigameTutorialBuilder()
                 .SetName("MinigameTutorial_DededeCartRacing")
                 .AddScreen(new TutorialScreenInfo(placehold, default, "It's time to race in Coasting Cart Racing!"))

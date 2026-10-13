@@ -80,7 +80,7 @@ public class Minigame_CartRacing : Minigame
     }
 
     [Header("Ghost Stuff")]
-    internal bool ShowGhosts = true;
+    internal bool ShowGhosts = AlexBWFieldTripsPlugin.CartTimeTrialGhosts.Value;
     private GhostRacer[] ghostracers = new GhostRacer[0];
     private CartReplaySystem _system;
     [SerializeField, Range(1, 10)] private int _framesToNCapture = 2;
@@ -247,7 +247,7 @@ public class Minigame_CartRacing : Minigame
         camera.transform.position = camPos;
         foreach (var racer in CartRacerController.Racers)
             racer.VirtualUpdate();
-        SmoothTime += Time.smoothDeltaTime;
+        SmoothTime += SmoothDeltaTime;
         foreach (var ghost in CartGhostController.Ghosts)
         {
             var _replay = ghost.replayData;
@@ -255,7 +255,7 @@ public class Minigame_CartRacing : Minigame
             ghost.transform.SetPositionAndRotation(pose.position, pose.rotation);
             if (SmoothTime > _replay.Duration)
                 ghost.Dissolve();
-            else if ((pose.position.x + Time.smoothDeltaTime) >= (stageBounds.xMax - 150f))
+            else if ((pose.position.x + 5f) >= (stageBounds.xMax - 150f))
             {
                 if (!ghost.transitioningToNext)
                 {

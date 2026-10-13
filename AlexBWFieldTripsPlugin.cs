@@ -1,11 +1,13 @@
 ﻿using AlexBWFieldtrips.DededeeCartRacing;
 using AlexBWFieldtrips.Wanted;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using MonoMod.Utils;
 using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.Components.Animation;
+using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
@@ -37,6 +39,7 @@ namespace AlexBWFieldtrips
         public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.0.0";
         public static AlexBWFieldTripsPlugin Instance { get; private set; }
         public static readonly AssetManager assetMan = new AssetManager();
+        internal static ConfigEntry<bool> CartTimeTrialGhosts;
 
         private void Awake()
         {
@@ -51,8 +54,23 @@ namespace AlexBWFieldtrips
             ModdedSaveGame.AddSaveHandler(Info);
         }
 
+        private class ModOptions : CustomOptionsCategory
+        {
+            public override void Build()
+            {
+                var toggle = CreateToggle("CartTimeTrialGhosts", "Time Trial Ghosts", CartTimeTrialGhosts.Value, new Vector2(75f, 40f), 198f);
+                AddTooltip(toggle, "If enabled, ghosts can appear\nfor Coasting Cart Racing's time trials\nand you are able to record your own attempted time!");
+                toggle.GetComponentInChildren<StandardMenuButton>().OnPress.AddListener(() => CartTimeTrialGhosts.Value = toggle.Value);
+            }
+        }
+
         private void AssetsLoad()
         {
+            CartTimeTrialGhosts = Config.Bind("Sharing Settings", "Time Attack Ghosts", true, "If enabled, ghosts can appear for Coasting Cart Racing's time trials and you are able to record your own attempted time!");
+            CustomOptionsCore.OnMenuInitialize += (__instance, handler) =>
+            {
+                handler.AddCategory<ModOptions>("ABW's Funland");
+            };
             AssetLoader.LocalizationFromFunction((lang) => new System.Collections.Generic.Dictionary<string, string>()
             {
                 { "Level_Trip_AlexBWWorld", "AlexBW145's Funland" },

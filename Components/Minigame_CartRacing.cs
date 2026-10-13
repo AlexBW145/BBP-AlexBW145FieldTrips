@@ -1,13 +1,12 @@
 ﻿using HarmonyLib;
 using MTM101BaldAPI;
-using MTM101BaldAPI.AssetTools;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
+using TarodevGhost;
 using UnityCipher;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -24,11 +23,9 @@ public class Minigame_CartRacing : Minigame
     [SerializeField] internal MinigameHUD minigameHud;
     [SerializeField] internal AnalogInputData movementAnalogData;
 
-    internal bool ShowGhosts = false;
-    private GhostRacer[] ghostracers;
-
     internal static readonly Dictionary<Character, RacerData> possibleRacers = new Dictionary<Character, RacerData>();
     [SerializeField] internal CartRacerController cartPre;
+    [SerializeField] internal CartGhostController ghostPre; 
 
     [SerializeField] internal List<GameObject> 
         stages = new List<GameObject>(),
@@ -82,6 +79,44 @@ public class Minigame_CartRacing : Minigame
         return racersPos[racersNonHash.IndexOf(racer)];
     }
 
+    [Header("Ghost Stuff")]
+    internal bool ShowGhosts = true;
+    private GhostRacer[] ghostracers = new GhostRacer[0];
+    private CartReplaySystem _system;
+    [SerializeField, Range(1, 10)] private int _framesToNCapture = 2;
+    private float SmoothTime { get; set; }
+    internal float SmoothDeltaTime
+    {
+        get
+        {
+            if (minigameBase.DeltaTime == 0f || GlobalCam.Instance.TransitionActive)
+                return 0f;
+
+            return Time.smoothDeltaTime;
+        }
+    }
+    internal void StopRecordingGhost(bool save)
+    {
+        _system.FinishRun();
+        if (save)
+        {
+            _system.GetRun(RecordingType.Last, out var rundata);
+            var data = new CartMinigameGhostRacerData();
+            data.data = rundata.Serialize();
+            var FileName = $"CartRaceGhost_{PlayerFileManager.Instance.fileName}_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-sss")}";
+            data.Image = CartRacerController.PlayerInstance.render.sprite.texture.GetRawTextureData();
+
+            var path = Application.persistentDataPath + $"/Modded/{AlexBWFieldTripsPlugin.PLUGIN_GUID}";
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            path += $"/{FileName}.ttghost";
+            if (File.Exists(path))
+                File.Delete(path);
+            File.WriteAllText(path, RijndaelEncryption.Encrypt(JsonUtility.ToJson(data), "RACERGHOSTDATA"));
+        }
+    }
+
     public override void Initialize(MinigameBase minigameBase, bool scoringMode)
     {
         base.Initialize(minigameBase, scoringMode);
@@ -108,10 +143,11 @@ public class Minigame_CartRacing : Minigame
         ChangeStage(0, false);
         if (scoringMode && ShowGhosts)
         {
-            var path = Path.Combine(AssetLoader.GetModPath(AlexBWFieldTripsPlugin.Instance), "GhostDatas");
+            _system = new CartReplaySystem(this);
+            var path = Application.persistentDataPath + $"/Modded/{AlexBWFieldTripsPlugin.PLUGIN_GUID}";
             if (Directory.Exists(Path.Combine(path)))
             {
-                var files = Directory.GetFiles(path);
+                var files = Directory.GetFiles(path, "*.ttghost");
                 if (files.Length > 0)
                 {
                     ghostracers = new GhostRacer[files.Length];
@@ -120,18 +156,16 @@ public class Minigame_CartRacing : Minigame
                         try
                         {
                             var data = JsonUtility.FromJson<CartMinigameGhostRacerData>(RijndaelEncryption.Decrypt(File.ReadAllText(files[i]), "RACERGHOSTDATA"));
-                            Texture2D image = new Texture2D(16, 16);
+                            Texture2D image = new Texture2D(200, 200, cartPre.render.sprite.texture.format, false);
                             image.LoadRawTextureData(data.Image);
                             image.Apply();
-                            GCHandle gcHandle = GCHandle.Alloc(data.data, GCHandleType.Pinned);
-                            Dictionary<float, Vector2> racerRun = (Dictionary<float, Vector2>)Marshal.PtrToStructure(gcHandle.AddrOfPinnedObject(), typeof(Dictionary<float, Vector2>));
-                            var racer = new GhostRacer(Sprite.Create(image, new Rect(0f, 0f, image.width, image.height), Vector2.one / 2f, 26f, 0u, SpriteMeshType.FullRect), data.FileName, racerRun);
+                            var racer = new GhostRacer(Sprite.Create(image, new Rect(0f, 0f, image.width, image.height), Vector2.one / 2f, 26f, 0u, SpriteMeshType.FullRect), new Recording(data.data));
                             ghostracers[i] = racer;
                         }
                         catch (Exception ex)
                         {
-                            UnityEngine.Debug.LogException(ex);
-                            continue;
+                            ghostracers = new GhostRacer[0];
+                            throw ex;
                         }
                     }
                 }
@@ -140,6 +174,16 @@ public class Minigame_CartRacing : Minigame
     }
     private void OnDestroy()
     {
+        if (ShowGhosts && scoringMode)
+        {
+            StopRecordingGhost(false);
+            for (int i = 0; i < ghostracers.Length; i++)
+            {
+                var data = ghostracers[i];
+                DestroyImmediate(data.Image.texture);
+                DestroyImmediate(data.Image);
+            }
+        }
         Destroy(camera.gameObject);
     }
     public override void Prepare()
@@ -152,6 +196,7 @@ public class Minigame_CartRacing : Minigame
     {
         base.VirtualReset();
         ElaspedTime = 0f;
+        SmoothTime = 0f;
         minigameHud.Reinitialize();
         GameObject.FindObjectsOfType<CartObject>(true).DoIf(x => stages.Contains(x.transform.parent?.gameObject), x => Destroy(x.gameObject));
         CartObject.ToCallVirtually.Clear();
@@ -160,6 +205,12 @@ public class Minigame_CartRacing : Minigame
             var racer = CartRacerController.Racers.First();
             CartRacerController.Racers.Remove(racer); // While loops will not let `OnDestroy()` be called until the loop ends.
             Destroy(racer.gameObject);
+        }
+        while (CartGhostController.Ghosts.Count > 0)
+        {
+            var ghost = CartGhostController.Ghosts.First();
+            CartGhostController.Ghosts.Remove(ghost);
+            Destroy(ghost.gameObject);
         }
         curStage = 0;
         ChangeStage(0, false);
@@ -196,6 +247,34 @@ public class Minigame_CartRacing : Minigame
         camera.transform.position = camPos;
         foreach (var racer in CartRacerController.Racers)
             racer.VirtualUpdate();
+        SmoothTime += Time.smoothDeltaTime;
+        foreach (var ghost in CartGhostController.Ghosts)
+        {
+            var _replay = ghost.replayData;
+            Pose pose = _replay.EvaluatePoint(SmoothTime);
+            ghost.transform.SetPositionAndRotation(pose.position, pose.rotation);
+            if (SmoothTime > _replay.Duration)
+                ghost.Dissolve();
+            else if ((pose.position.x + 15f) >= (stageBounds.xMax - 150f))
+            {
+                if (!ghost.transitioningToNext)
+                {
+                    ghost.transitioningToNext = true;
+                    var currentStage = stages.IndexOf(ghost.transform.parent.gameObject);
+                    if (currentStage == -1)
+                    {
+                        MTM101BaldiDevAPI.CauseCrash(AlexBWFieldTripsPlugin.Instance.Info, new Exception("The ghost is outside the stages!"));
+                        return;
+                    }
+                    var nextStage = stages[Mathf.Min(currentStage + 1, stages.Count - 1)];
+                    if ((currentStage + 1) > (stages.Count - 1))
+                        return;
+                    ghost.transform.SetParent(nextStage.transform, false);
+                }
+            }
+            else if (ghost.transitioningToNext && stageBounds.Contains(pose.position))
+                ghost.transitioningToNext = false;
+        }
         for (int i = 0; i < CartObject.ToCallVirtually.Count; i++)
         {
             if (i >= CartObject.ToCallVirtually.Count) break;
@@ -203,7 +282,7 @@ public class Minigame_CartRacing : Minigame
         }
         foreach (var track in trackers)
         {
-            int stageIndex = stages.IndexOf(track.Key.transform.parent.gameObject);
+            int stageIndex = stages.IndexOf(track.Key.parent.gameObject);
             var pos = track.Value.anchoredPosition;
             float max = 27.5f * stages.Count;
             pos.x = ((track.Key.transform.localPosition.x / 27.5f) + (27.5f * stageIndex)) - (max - (27.5f * stageIndex));
@@ -287,6 +366,8 @@ public class Minigame_CartRacing : Minigame
     {
         raceFinished = true;
         minigameBase.AudioManager.PlaySingle(audFinished);
+        if (ShowGhosts && scoringMode)
+            StopRecordingGhost(true);
         MusicManager.Instance.StopFile();
         MusicManager.Instance.StopMidi();
         int placement = GetPlacement(CartRacerController.PlayerInstance);
@@ -385,7 +466,14 @@ public class Minigame_CartRacing : Minigame
             }
             placement += 10f;
         }
-        Instantiate(cartPre, stages[0].transform, false).Initialize(this, possibleRacers[Character.Null], true, halfplacement);
+        var player = Instantiate(cartPre, stages[0].transform, false);
+        player.Initialize(this, possibleRacers[Character.Null], true, halfplacement);
+        if (ShowGhosts && scoringMode)
+        {
+            _system.StartRun(player.transform, _framesToNCapture, float.PositiveInfinity);
+            for (int i = 0; i < ghostracers.Length; i++)
+                Instantiate(ghostPre, stages[0].transform, false).Initialize(this, ghostracers[i]);
+        }
     }
     private void CreateBooster(GameObject stage)
     {
@@ -422,7 +510,7 @@ public class Minigame_CartRacing : Minigame
 
     internal void PerfectFailure() => perfect = false;
 
-    private Dictionary<CartRacerController, RectTransform> trackers = new Dictionary<CartRacerController, RectTransform>();
+    private Dictionary<Transform, RectTransform> trackers = new Dictionary<Transform, RectTransform>();
     internal void TrackController(CartRacerController controller, Color color)
     {
         var track = Instantiate(trackerPre, trackerTransform);
@@ -433,12 +521,19 @@ public class Minigame_CartRacing : Minigame
             track.sizeDelta += Vector2.one * 3.5f;
             track.SetAsFirstSibling();
         }
-        trackers.Add(controller, track);
+        trackers.Add(controller.transform, track);
     }
-    internal void RemoveTracker(CartRacerController controller)
+    internal void TrackController(CartGhostController controller)
     {
-        Destroy(trackers[controller].gameObject);
-        trackers.Remove(controller);
+        var track = Instantiate(trackerPre, trackerTransform);
+        track.GetComponent<RawImage>().color = new Color(1f, 1f, 1f, 0.5f);
+        track.gameObject.SetActive(true);
+        trackers.Add(controller.transform, track);
+    }
+    internal void RemoveTracker(Transform controller)
+    {
+        Destroy(trackers[controller.transform].gameObject);
+        trackers.Remove(controller.transform);
     }
 }
 
@@ -472,9 +567,9 @@ internal class CartRacerController : MonoBehaviour
 
     [Header("Bot Stuff")]
     private RacerDifficulty curDifficulty;
-    private Vector2 _startPos, destination, expectedPosition, previousPosition;
+    private Vector2 destination;
     private List<Vector2> destinationPoints = new List<Vector2>();
-    private bool beenMoved, rubber;
+    private bool rubber;
     private float moveCool;
     private Vector2 FlatPosition => new Vector2(transform.localPosition.x, transform.localPosition.y);
     private Rect camBounds = new Rect(-45f, -150f, 250f, 300f);
@@ -488,8 +583,6 @@ internal class CartRacerController : MonoBehaviour
         this.isPlayer = isPlayer;
         _movement = new Vector2(0f, initialplacement);
         transform.localPosition = _movement;
-        expectedPosition = transform.localPosition;
-        _startPos = transform.localPosition;
         if (isPlayer)
         {
             gameObject.layer = LayerMask.NameToLayer("Player");
@@ -506,7 +599,7 @@ internal class CartRacerController : MonoBehaviour
             gameObject.tag = "NPC";
         }
         Racers.Add(this);
-        var color = isPlayer ? Color.red : new(UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f));
+        var color = data.Color;
         liner.startColor = color - new Color(0f, 0f, 0f, 0.75f);
         liner.endColor = color;
         minigame.TrackController(this, color);
@@ -575,40 +668,15 @@ internal class CartRacerController : MonoBehaviour
     private void BotUpdate()
     {
         if (!(minigame.minigameBase.DeltaTime > 0f)) return;
-        _startPos = transform.localPosition;
-        if (expectedPosition != FlatPosition)
-            beenMoved = true;
-        else
-            beenMoved = false;
         if (!minigame.stageBounds.Contains(_movement)) return;
         moveCool -= minigame.minigameBase.DeltaTime;
-
-        if (previousPosition != FlatPosition)
-        {
-            if (beenMoved)
-            {
-                if (destinationPoints.Count > 0 && destination != FlatPosition)
-                {
-                    FindPath(destination);
-                }
-                else
-                {
-                    ClearDestination();
-                    DestinationEmpty();
-                }
-            }
-
-            previousPosition = FlatPosition;
-        }
 
         if (destinationPoints.Count > 0)
         {
             MoveTowardsDestination();
-            expectedPosition = transform.localPosition;
         }
         else
         {
-            expectedPosition = transform.localPosition;
             DestinationEmpty();
         }
         if (moveCool <= 0f)
@@ -621,10 +689,13 @@ internal class CartRacerController : MonoBehaviour
         destination = _movement;
         destination.y = destinationPoints[0].y;
 
-        while ((destination - _movement).magnitude <= _distanceToTravel && destinationPoints.Count > 0 && _distanceToTravel > 0f)
+        while ((_movement.x > destinationPoints[0].x || (destination - _movement).magnitude <= _distanceToTravel) && destinationPoints.Count > 0 && _distanceToTravel > 0f)
         {
-            _distanceToTravel -= (destination - _movement).magnitude;
-            _movement.y = destination.y;
+            if (!(_movement.x > destinationPoints[0].x))
+            {
+                _distanceToTravel -= (destination - _movement).magnitude;
+                _movement.y = destination.y;
+            }
             destinationPoints.RemoveAt(0);
             if (destinationPoints.Count > 0)
             {
@@ -661,7 +732,7 @@ internal class CartRacerController : MonoBehaviour
     internal void VirtualFixedUpdate()
     {
         if (isPlayer) return;
-        hitCount = Physics2D.RaycastNonAlloc(transform.position, transform.right, _hits, 240f + speed, touchLayers);
+        hitCount = Physics2D.RaycastNonAlloc(transform.position, transform.right, _hits, 140f + speed, touchLayers);
         if ((minigame?.minigameBase.DeltaTime ?? 0f) != 0f && curDifficulty != RacerDifficulty.Easy)
         {
             for (int i = 0; i < hitCount; i++)
@@ -677,7 +748,7 @@ internal class CartRacerController : MonoBehaviour
                     continue;
                 }
                 var booster = hit.transform.GetComponent<CartBooster>();
-                if (booster != null && ((curDifficulty == RacerDifficulty.Hard && (destinationPoints.Count <= 0 || hit.distance < destinationPoints.Last().x)) || moveCool <= 0f))
+                if (booster != null && curDifficulty == RacerDifficulty.Hard && (destinationPoints.Count <= 0 || hit.distance < destinationPoints.Last().x))
                 {
                     FindPath(hit.transform.localPosition, false);
                     ResetCooldown();
@@ -694,7 +765,7 @@ internal class CartRacerController : MonoBehaviour
             for (int i = 0; i < hitCount; i++)
             {
                 var hit = _hits[i];
-                var hurter = hit.transform.GetComponent<CartHurter>();
+                var hurter = hit.transform?.GetComponent<CartHurter>();
                 if (hurter != null)
                 {
                     bool isBelow = transform.localPosition.y < hit.transform.localPosition.y;
@@ -702,7 +773,7 @@ internal class CartRacerController : MonoBehaviour
                     continue;
                 }
                 if (targetFood) continue;
-                var booster = hit.transform.GetComponent<CartBooster>();
+                var booster = hit.transform?.GetComponent<CartBooster>();
                 if (booster != null && hit.distance < (180f + speed))
                 {
                     FindPath(hit.transform.localPosition, false);
@@ -745,11 +816,6 @@ internal class CartRacerController : MonoBehaviour
     }
     public void FindPath(Vector2 targetPos) => FindPath(targetPos, targeting: true);
 
-    public void ClearDestination()
-    {
-        destinationPoints.Clear();
-    }
-
     private void StateUpdate()
     {
         UpdateLineRenderer(transitioningToNext ? 0f : _absoluteVector.y);
@@ -784,7 +850,7 @@ internal class CartRacerController : MonoBehaviour
     private void OnDestroy()
     {
         Racers.Remove(this);
-        minigame.RemoveTracker(this);
+        minigame.RemoveTracker(transform);
         if (PlayerInstance == this)
             PlayerInstance = null;
     }
@@ -809,30 +875,63 @@ internal class CartRacerController : MonoBehaviour
     }
 }
 
-public class RacerData
+internal class CartGhostController : MonoBehaviour // From Tarodev's example ghost script
 {
-    internal readonly Sprite Image;
-    internal readonly RacerDifficulty Difficulty;
+    [SerializeField] internal SpriteRenderer render;
+    private Minigame_CartRacing minigame;
+    internal Recording replayData;
+    public static HashSet<CartGhostController> Ghosts = new HashSet<CartGhostController>();
+    internal bool transitioningToNext = false;
 
-    public RacerData(Sprite image, RacerDifficulty difficulty)
+    private void OnDestroy()
     {
-        Image = image;
-        Difficulty = difficulty;
+        Ghosts.Remove(this);
+        minigame.RemoveTracker(transform);
+    }
+
+    public void Initialize(Minigame_CartRacing minigame, GhostRacer data)
+    {
+        this.minigame = minigame;
+        render.sprite = data.Image;
+        replayData = data.data;
+        Ghosts.Add(this);
+        minigame.TrackController(this);
+    }
+
+    public void Dissolve()
+    {
+        IEnumerator DissolveAnim()
+        {
+            Color alpha = render.color;
+            while (alpha.a > 0f)
+            {
+                alpha.a -= Time.unscaledDeltaTime;
+                render.color = alpha;
+                yield return null;
+            }
+            Destroy(gameObject);
+        }
+        Destroy(gameObject);
+        Ghosts.Remove(this);
     }
 }
 
-internal class GhostRacer
+public class RacerData(Sprite image, RacerDifficulty difficulty)
 {
-    public Sprite Image;
-    public string FileName;
-    public Dictionary<float, Vector2> data;
+    internal readonly Sprite Image = image;
+    internal readonly RacerDifficulty Difficulty = difficulty;
+    internal readonly Color Color = new(UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f));
 
-    public GhostRacer(Sprite image, string fileName, Dictionary<float, Vector2> data)
+    public RacerData(Sprite image, RacerDifficulty difficulty, Color color) : this (image, difficulty)
     {
-        Image = image;
-        FileName = fileName;
-        this.data = data;
+        Color = color;
     }
+}
+
+internal class GhostRacer(Sprite image, Recording data)
+{
+    public Sprite Image = image;
+    public Recording data = data;
 }
 
 internal class HorizontalScroller : MonoBehaviour
@@ -929,5 +1028,169 @@ internal class CartHurter : CartObject
             cart.Hurt();
             Destroy(gameObject);
         }
+    }
+}
+
+internal class CartReplaySystem // From Tarodev's replay system script, but this variant is to account timescale fixes.
+{
+    private readonly WaitForFixedUpdate _wait = new WaitForFixedUpdate();
+
+    private readonly Dictionary<RecordingType, Recording> _runs = new Dictionary<RecordingType, Recording>();
+
+    private Recording _currentRun;
+
+    private float _elapsedRecordingTime;
+
+    private int _snapshotEveryNFrames;
+
+    private int _frameCount;
+
+    private float _maxRecordingTimeLimit;
+
+    private Recording _currentReplay;
+
+    private GameObject _ghostObj;
+
+    private bool _destroyOnComplete;
+
+    private float _replaySmoothedTime;
+
+    public CartReplaySystem(Minigame_CartRacing runner)
+    {
+        runner.StartCoroutine(FixedUpdate(runner));
+        runner.StartCoroutine(Update(runner));
+    }
+
+    private IEnumerator FixedUpdate(Minigame_CartRacing minigame)
+    {
+        while (true)
+        {
+            yield return _wait;
+            AddSnapshot();
+            _elapsedRecordingTime += minigame.SmoothDeltaTime;
+        }
+    }
+
+    private IEnumerator Update(Minigame_CartRacing minigame)
+    {
+        while (true)
+        {
+            yield return null;
+            _replaySmoothedTime += minigame.SmoothDeltaTime;
+            UpdateReplay();
+        }
+    }
+
+    public void StartRun(Transform target, int snapshotEveryNFrames = 2, float maxRecordingTimeLimit = 60f)
+    {
+        _currentRun = new Recording(target);
+        _elapsedRecordingTime = 0f;
+        _snapshotEveryNFrames = Mathf.Max(1, snapshotEveryNFrames);
+        _frameCount = 0;
+        _maxRecordingTimeLimit = maxRecordingTimeLimit;
+    }
+
+    private void AddSnapshot()
+    {
+        if (_currentRun != null)
+        {
+            if (_frameCount++ % _snapshotEveryNFrames == 0)
+            {
+                _currentRun.AddSnapshot(_elapsedRecordingTime);
+            }
+
+            if (_currentRun.Duration >= _maxRecordingTimeLimit)
+            {
+                FinishRun();
+            }
+        }
+    }
+
+    public bool FinishRun(bool save = true)
+    {
+        if (_currentRun == null)
+        {
+            return false;
+        }
+
+        if (!save)
+        {
+            _currentRun = null;
+            return false;
+        }
+
+        _runs[RecordingType.Last] = _currentRun;
+        _currentRun = null;
+        if (!GetRun(RecordingType.Best, out var run) || _runs[RecordingType.Last].Duration <= run.Duration)
+        {
+            _runs[RecordingType.Best] = _runs[RecordingType.Last];
+            return true;
+        }
+
+        return false;
+    }
+
+    public void SetSavedRun(Recording run)
+    {
+        _runs[RecordingType.Saved] = run;
+    }
+
+    public bool GetRun(RecordingType type, out Recording run)
+    {
+        return _runs.TryGetValue(type, out run);
+    }
+
+    public void PlayRecording(RecordingType type, GameObject ghostObj, bool destroyOnCompletion = true)
+    {
+        if (_ghostObj != null)
+        {
+            GameObject.Destroy(_ghostObj);
+        }
+
+        if (!GetRun(type, out _currentReplay))
+        {
+            GameObject.Destroy(ghostObj);
+            return;
+        }
+
+        _replaySmoothedTime = 0f;
+        _destroyOnComplete = destroyOnCompletion;
+        if (_currentReplay != null)
+        {
+            _ghostObj = ghostObj;
+        }
+        else if (_destroyOnComplete)
+        {
+            GameObject.Destroy(_ghostObj);
+        }
+    }
+
+    private void UpdateReplay()
+    {
+        if (_currentReplay == null)
+        {
+            return;
+        }
+
+        Pose pose = _currentReplay.EvaluatePoint(_replaySmoothedTime);
+        _ghostObj.transform.SetPositionAndRotation(pose.position, pose.rotation);
+        if (_replaySmoothedTime > _currentReplay.Duration)
+        {
+            _currentReplay = null;
+            if (_destroyOnComplete)
+            {
+                GameObject.Destroy(_ghostObj);
+            }
+        }
+    }
+
+    public void StopReplay()
+    {
+        if (_ghostObj != null)
+        {
+            GameObject.Destroy(_ghostObj);
+        }
+
+        _currentReplay = null;
     }
 }

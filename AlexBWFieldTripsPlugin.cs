@@ -307,22 +307,32 @@ namespace AlexBWFieldtrips
             render.sprite = placehold;
             Minigame_CartRacing.possibleRacers.AddRange(new Dictionary<Character, RacerData>()
             {
-                { Character.Null, new RacerData(placehold, RacerDifficulty.NotParticipating) },
-                { Character.Baldi, new RacerData(placehold, RacerDifficulty.Hard) },
-                { Character.Principal, new RacerData(placehold, RacerDifficulty.Normal) },
-                { Character.Crafters, new RacerData(placehold, RacerDifficulty.NotParticipating) },
-                { Character.Prize, new RacerData(placehold, RacerDifficulty.Easy) },
-                { Character.Sweep, new RacerData(placehold, RacerDifficulty.Normal) },
-                { Character.Bully, new RacerData(placehold, RacerDifficulty.Hard) },
-                { Character.Beans, new RacerData(placehold, RacerDifficulty.Normal) },
-                { Character.Cumulo, new RacerData(placehold, RacerDifficulty.Normal) },
-                { Character.Chalkles, new RacerData(placehold, RacerDifficulty.NotParticipating) },
-                { Character.Playtime, new RacerData(placehold, RacerDifficulty.Easy) },
-                { Character.Pomp, new RacerData(placehold, RacerDifficulty.Normal) },
-                { Character.DrReflex, new RacerData(placehold, RacerDifficulty.Normal) },
-                { Character.LookAt, new RacerData(placehold, RacerDifficulty.Hard) },
+                { Character.Null, new RacerData(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 26f, "CartDash_NPCs", "CartRider_Player.png"), RacerDifficulty.NotParticipating, new Color(225f / 255f, 58f/ 255f, 46f / 255f)) },
+                { Character.Baldi, new RacerData(placehold, RacerDifficulty.Hard, Color.green) },
+                { Character.Principal, new RacerData(placehold, RacerDifficulty.Normal, new Color(0.5f, 0.5f, 0.5f)) },
+                { Character.Crafters, new RacerData(placehold, RacerDifficulty.NotParticipating, Color.white) },
+                { Character.Prize, new RacerData(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 26f, "CartDash_NPCs", "CartRider_FirstPrize.png"), RacerDifficulty.Easy, new Color(0.05f, 0.66f, 0.58f)) },
+                { Character.Sweep, new RacerData(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 26f, "CartDash_NPCs", "CartRider_Sweep.png"), RacerDifficulty.Normal, new Color(0f, 0.56f, 0.15f)) },
+                { Character.Bully, new RacerData(placehold, RacerDifficulty.Hard, new Color(0.8f, 0.4f, 0.01f)) },
+                { Character.Beans, new RacerData(placehold, RacerDifficulty.Normal, new Color(1f, 0f, 1f)) },
+                { Character.Cumulo, new RacerData(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 26f, "CartDash_NPCs", "CartRider_Cumulo.png"), RacerDifficulty.Normal, new Color(0.4f, 0.3f, 0.4f)) },
+                { Character.Chalkles, new RacerData(placehold, RacerDifficulty.NotParticipating, Color.white) },
+                { Character.Playtime, new RacerData(placehold, RacerDifficulty.Easy, Color.red) },
+                { Character.Pomp, new RacerData(placehold, RacerDifficulty.Normal, new Color(0.97f, 1f, 0.4f)) },
+                { Character.DrReflex, new RacerData(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 26f, "CartDash_NPCs", "CartRider_DrReflex.png"), RacerDifficulty.Normal, new Color(0f, 0.29f, 0.5f)) },
+                { Character.LookAt, new RacerData(placehold, RacerDifficulty.Hard, new Color(0.2f, 0.2f, 0.18f)) },
             });
             kartracing.movementAnalogData = Resources.FindObjectsOfTypeAll<PlayerMovement>().Last(x => x.IsPrefab()).movementAnalogData;
+            cartPre = new GameObject("GhostCartRacerPre").transform;
+            cartPre.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
+            kartracing.ghostPre = cartPre.gameObject.AddComponent<CartGhostController>();
+            render = new GameObject("Render", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            render.transform.SetParent(cartPre, false);
+            render.material = lit_nobillboard;
+            render.gameObject.layer = LayerMask.NameToLayer("Overlay");
+            render.color = new Color(1f, 1f, 1f, 0.5f);
+            render.sprite = placehold;
+            kartracing.ghostPre.render = render;
             RectTransform bg = (RectTransform)kartracing.transform.Find("GameCanvas").Find("Game").Find("BG");
             var bgSet = new GameObject("Stage_1");
             bgSet.transform.SetParent(bg.parent, false);

@@ -36,6 +36,9 @@
     <Reference Include="PlusStudioLevelLoader">
       <HintPath>..\..\..\SteamLibrary\steamapps\common\Baldi's Basics Plus\BepInEx\plugins\PlusStudioLevelLoader.dll</HintPath>
     </Reference>
+    <Reference Include="TaroDev-Ghost">
+      <HintPath>bin\TaroDev-Ghost.dll</HintPath>
+    </Reference>
     <Reference Include="ThumblysFieldTripsAPI">
       <HintPath>bin\ThumblysFieldTripsAPI.dll</HintPath>
     </Reference>

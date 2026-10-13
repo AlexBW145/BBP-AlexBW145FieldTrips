@@ -8,8 +8,7 @@ namespace AlexBWFieldtrips.DededeeCartRacing;
 internal class CartMinigameGhostRacerData
 {
     public byte[] Image;
-    public string FileName;
-    public byte[] data;
+    public string data;
 }
 
 [Serializable]

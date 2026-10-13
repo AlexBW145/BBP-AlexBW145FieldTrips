@@ -130,6 +130,8 @@ namespace AlexBWFieldtrips
             assetMan.Add("ABW/Talk", AssetLoader.SpriteFromMod(this, himpivot, 100f, "ABW_Speak.png"));
             assetMan.Add("ABW/Tutorial1", AssetLoader.SpritesFromSpritesheet(19, 1, 1f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ABW_Tutorial1.png")));
             assetMan.Add("ABW/Tutorial2", AssetLoader.SpritesFromSpritesheet(19, 1, 1f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ABW_Tutorial2.png")));
+            assetMan.Add("ABWLand/Cart", AssetLoader.SpritesFromSpritesheet(8, 1, 21f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "CartRideIntoDrumDash.png")));
+            assetMan.Add("ABWLand/Telescope", AssetLoader.SpritesFromSpritesheet(8, 1, 21f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ABWLandTelescope.png")));
         }
 
         private IEnumerator PreLoad()
@@ -565,12 +567,54 @@ namespace AlexBWFieldtrips
                 .SetHubRoom(tripHub)
                 .SetSpawn(placedPos + sceneObjectOnAccident.levelAsset.spawnPoint, Direction.North)
                 .Build();
+            fieldtripHub.roomFunctionContainer = function;
             ((UnityEngine.Object)fieldtripHub).name = "Room_AlexBWWorld";
             fieldtripHub.name = "AlexBWWorld";
             ((UnityEngine.Object)playroomPre).name = "Room_AlexBWPlayroom";
             playroomPre.name = "AlexBWPlayroom";
             var objectBase = function.transform.Find("ObjectBase");
-            fieldtripHub.roomFunctionContainer = function;
+
+            Sprite[] cartSprites = assetMan.Get<Sprite[]>("ABWLand/Cart"), teleSprites = assetMan.Get<Sprite[]>("ABWLand/Telescope");
+            var cartDisplay = new GameObject("Cart");
+            cartDisplay.transform.SetParent(objectBase, false);
+            render = new GameObject("Renderer", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            render.transform.SetParent(cartDisplay.transform, false);
+            render.sprite = cartSprites[0];
+            render.material = AssetFinder.FindOfTypeWithName<Material>("SpriteStandard_Billboard", true);
+            var rotator = render.gameObject.AddComponent<AnimatedSpriteRotator>();
+            FieldInfo
+                _renderer = AccessTools.DeclaredField(typeof(AnimatedSpriteRotator), "renderer"),
+                _spriteSheet = AccessTools.DeclaredField(typeof(SpriteRotationMap), "spriteSheet"),
+                _spriteMap = AccessTools.DeclaredField(typeof(AnimatedSpriteRotator), "spriteMap");
+            _renderer.SetValue(rotator, render);
+            SpriteRotationMap map = new SpriteRotationMap();
+            map.angleCount = 8;
+            _spriteSheet.SetValue(map, cartSprites);
+            _spriteMap.SetValue(rotator, new SpriteRotationMap[] { map });
+            cartDisplay.transform.localPosition = gamelocations[2].position;
+            render.transform.localPosition = Vector3.up * 2.5f;
+            render.gameObject.layer = LayerMask.NameToLayer("Billboard");
+            cartDisplay.transform.localRotation = Direction.West.ToRotation();
+
+            var telescope = new GameObject("Telescope");
+            telescope.transform.SetParent(objectBase, false);
+            render = new GameObject("Renderer", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            render.transform.SetParent(telescope.transform, false);
+            render.sprite = teleSprites[0];
+            render.material = AssetFinder.FindOfTypeWithName<Material>("SpriteStandard_Billboard", true);
+            rotator = render.gameObject.AddComponent<AnimatedSpriteRotator>();
+            _renderer.SetValue(rotator, render);
+            map = new SpriteRotationMap();
+            map.angleCount = 8;
+            _spriteSheet.SetValue(map, teleSprites);
+            _spriteMap.SetValue(rotator, new SpriteRotationMap[] { map });
+            telescope.transform.localPosition = gamelocations[0].position;
+            render.transform.localPosition = Vector3.up * 4.75f;
+            render.gameObject.layer = LayerMask.NameToLayer("Billboard");
+            var capsulecollider = telescope.AddComponent<CapsuleCollider>();
+            capsulecollider.height = 8f;
+            capsulecollider.radius = 1.5f;
+
             fieldtripHub.basicObjects.RemoveAll(gamelocations.Contains);
             fieldtripHub.basicObjects.RemoveAll(tutorialLocations.Contains);
 
@@ -583,6 +627,7 @@ namespace AlexBWFieldtrips
             render.sprite = assetMan.Get<Sprite>("ABWLand/Moon");
             render.transform.localPosition = Vector3.zero;
             render.material = AssetFinder.FindOfTypeWithName<Material>("Lit_SpriteStandard_Billboard", true);
+            render.gameObject.layer = LayerMask.NameToLayer("Billboard");
             theMoon.transform.localScale = Vector3.one * 3f;
             theMoon.transform.localPosition = new(930f, -250f, 696f);
             assetMan.Add("FieldTrip", fieldtripLocation);
@@ -682,7 +727,7 @@ namespace AlexBWFieldtrips
         }
         private void LateUpdate()
         {
-            if (room.ec.PlayerTimeScale == 0f)
+            if (room.ec.PlayerTimeScale == 0f || Time.timeScale == 0f)
             {
                 for (int i = 0; i < CoreGameManager.Instance.setPlayers; i++)
                 {

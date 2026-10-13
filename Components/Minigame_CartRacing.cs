@@ -255,7 +255,7 @@ public class Minigame_CartRacing : Minigame
             ghost.transform.SetPositionAndRotation(pose.position, pose.rotation);
             if (SmoothTime > _replay.Duration)
                 ghost.Dissolve();
-            else if ((pose.position.x + 15f) >= (stageBounds.xMax - 150f))
+            else if ((pose.position.x + Time.smoothDeltaTime) >= (stageBounds.xMax - 150f))
             {
                 if (!ghost.transitioningToNext)
                 {
@@ -912,7 +912,7 @@ internal class CartGhostController : MonoBehaviour // From Tarodev's example gho
             Destroy(gameObject);
         }
         Destroy(gameObject);
-        Ghosts.Remove(this);
+        OnDestroy();
     }
 }
 

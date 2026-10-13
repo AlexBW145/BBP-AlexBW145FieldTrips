@@ -248,7 +248,7 @@ namespace AlexBWFieldtrips
             BasePatches.dedede = EnumExtensions.GetFromExtendedName<MinigameName>("DededeCartRacing");
             var cartPre = new GameObject("CartRacerPre", typeof(CircleCollider2D)).transform;
             cartPre.SetParent(MTM101BaldiDevAPI.prefabTransform, false);
-            cartPre.GetComponent<CircleCollider2D>().radius = 2.5f;
+            cartPre.GetComponent<CircleCollider2D>().radius = 3f;
             cartPre.GetComponent<CircleCollider2D>().isTrigger = true;
             cartPre.gameObject.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
             kartracing.cartPre = cartPre.gameObject.AddComponent<CartRacerController>();
@@ -283,13 +283,13 @@ namespace AlexBWFieldtrips
             audManCart.ReflectionSetVariable("soundOnStart", new SoundObject[] { assetMan.Get<SoundObject>("CartRace/Engine") });
             var lineren = new GameObject("Liner", typeof(LineRenderer)).GetComponent<LineRenderer>();
             lineren.transform.SetParent(cartPre.transform, false);
-            lineren.transform.localPosition = Vector3.down * 2.5f;
+            lineren.transform.localPosition = new Vector3(2f, -4.25f, 0f);
             lineren.useWorldSpace = false;
             lineren.material = lit_nobillboard;
             lineren.numCapVertices = 2;
             lineren.alignment = LineAlignment.TransformZ;
-            lineren.positionCount = 4;
-            lineren.SetPositions([Vector3.left * 20f, Vector3.left * 10f, Vector3.left * 5f, Vector3.zero]);
+            lineren.positionCount = 5;
+            lineren.SetPositions([Vector3.left * 40f, Vector3.left * 20f, Vector3.left * 10f, Vector3.left * 5f, Vector3.zero]);
             lineren.widthCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
             lineren.gameObject.layer = LayerMask.NameToLayer("Overlay");
             kartracing.cartPre.liner = lineren;
@@ -303,7 +303,7 @@ namespace AlexBWFieldtrips
             kartracing.cartPre.boostDouble = AssetFinder.FindOfTypeWithName<SoundObject>("DrinkElixir", true);
             kartracing.cartPre.boostTriple = AssetFinder.FindOfTypeWithName<SoundObject>("YTPPickup_2", true);
             //kartracing.gameGOBJ = kartracing.transform.Find("GameCanvas").Find("Game");
-            var placehold = Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "1PrizeSprites_12" && x.IsPrefab());
+            var placehold = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 26f, "CartDash_NPCs", "CartRider_Template.png");
             render.sprite = placehold;
             Minigame_CartRacing.possibleRacers.AddRange(new Dictionary<Character, RacerData>()
             {
@@ -417,6 +417,7 @@ namespace AlexBWFieldtrips
             render.material = lit_nobillboard;
             render.gameObject.layer = LayerMask.NameToLayer("Overlay");
             render.drawMode = SpriteDrawMode.Sliced;
+            render.transform.localPosition = Vector3.down * 1.25f;
             kartracing.hurtPre.spriteRenderer = render;
             kartracing.hurtSpr = AssetFinder.FindOfTypeWithName<Sprite>("Campfire_Sheet_18", true);
             var gameCanvas = kartracing.minigameHud.transform.parent;

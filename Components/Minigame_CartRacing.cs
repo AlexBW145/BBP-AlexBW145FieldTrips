@@ -506,17 +506,20 @@ internal class CartRacerController : MonoBehaviour
             gameObject.tag = "NPC";
         }
         Racers.Add(this);
-        minigame.TrackController(this, isPlayer ? Color.red : new(UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f)));
+        var color = isPlayer ? Color.red : new(UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f), UnityEngine.Random.Range(0.5f, 1f));
+        liner.startColor = color - new Color(0f, 0f, 0f, 0.75f);
+        liner.endColor = color;
+        minigame.TrackController(this, color);
     }
     
     private void UpdateLineRenderer(float absoluteVector)
     {
         Vector3 linePos = liner.GetPosition(2);
-        liner.SetPosition(2, Vector3.MoveTowards(linePos, (Vector3.right * linePos.x) + (Vector3.down * (5f * absoluteVector)), speed * minigame.minigameBase.DeltaTime));
+        liner.SetPosition(2, Vector3.MoveTowards(linePos, (Vector3.right * linePos.x) + (Vector3.down * (10f * absoluteVector)), speed * minigame.minigameBase.DeltaTime));
         linePos = liner.GetPosition(1);
-        liner.SetPosition(1, Vector3.MoveTowards(linePos, (Vector3.right * linePos.x) + (Vector3.down * (10f * absoluteVector)), speed * minigame.minigameBase.DeltaTime));
+        liner.SetPosition(1, Vector3.MoveTowards(linePos, (Vector3.right * linePos.x) + (Vector3.down * (20f * absoluteVector)), speed * minigame.minigameBase.DeltaTime));
         linePos = liner.GetPosition(0);
-        liner.SetPosition(0, Vector3.MoveTowards(linePos, (Vector3.right * linePos.x) + (Vector3.down * (15f * absoluteVector)), speed * minigame.minigameBase.DeltaTime));
+        liner.SetPosition(0, Vector3.MoveTowards(linePos, (Vector3.right * linePos.x) + (Vector3.down * (40f * absoluteVector)), speed * minigame.minigameBase.DeltaTime));
     }
 
     private bool pausedAudMans = false;

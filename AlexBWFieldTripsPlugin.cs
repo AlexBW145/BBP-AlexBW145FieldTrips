@@ -90,6 +90,9 @@ namespace AlexBWFieldtrips
             assetMan.Add<Sprite[]>("Tutorial/WANTED", [
                 AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "6.jpg")
                 ]);
+            assetMan.Add<Sprite[]>("Tutorial/CoastingCartRacing", [
+                AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "6.jpg")
+                ]);
             Color him = new Color(0.1921568627f, 0.5411764706f, 1f);
             assetMan.AddRange<SoundObject>([
                 ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "WANTED_DrumRoll.wav"), "WANTED_DrumRoll", SoundType.Effect, Color.white),
@@ -464,14 +467,15 @@ namespace AlexBWFieldtrips
             trackPlayer.anchoredPosition = Vector2.zero;
             kartracing.trackerPre = trackPlayer;
             trackPlayer.gameObject.SetActive(false);
+            tutorialScreens = assetMan.Get<Sprite[]>("Tutorial/CoastingCartRacing");
             var kartracingTutorial = new MinigameTutorialBuilder()
                 .SetName("MinigameTutorial_DededeCartRacing")
-                .AddScreen(new TutorialScreenInfo(placehold, default, "It's time to race in Coasting Cart Racing!"))
-                .AddScreen(new TutorialScreenInfo(placehold, default, "To push foward, eat foods that are randomly appearing accross the stages!"))
-                .AddScreen(new TutorialScreenInfo(placehold, default, "Eat more at once and you will get a multiplied boost!"))
-                .AddScreen(new TutorialScreenInfo(placehold, default, "Be aware of fire! Landing on them will push you down to the lowest speed,\nforcing you to go back to regular speed!"))
-                .AddScreen(new TutorialScreenInfo(placehold, default, "There are three stages in total!\nWhen someone reaches to the end, the race ends!"))
-                .AddScreen(new TutorialScreenInfo(placehold, default, "In scoring mode, you are after the clock for the best record!"))
+                .AddScreen(new TutorialScreenInfo(tutorialScreens[0], new Vector3(100f, -200f, 2f), "It's time to race in Coasting Cart Racing!"))
+                .AddScreen(new TutorialScreenInfo(tutorialScreens[1], new Vector3(0f, -100f, 1f), "To push foward, eat foods that are randomly appearing accross the stages!"))
+                .AddScreen(new TutorialScreenInfo(tutorialScreens[2], new Vector3(0f, -100f, 1f), "Eat more at once and you will get a multiplied boost!"))
+                .AddScreen(new TutorialScreenInfo(tutorialScreens[3], new Vector3(0f, -100f, 1f), "Be aware of fire! Landing on them will push you down to the lowest speed,\nforcing you to go back to regular speed!"))
+                .AddScreen(new TutorialScreenInfo(tutorialScreens[4], new Vector3(45f, 150f, -0.25f), "There are three stages in total!\nWhen someone reaches to the end, the race ends!"))
+                .AddScreen(new TutorialScreenInfo(tutorialScreens[5], new Vector3(-155f, 120f, 0.25f), "In scoring mode, you are after the clock for the best record!"))
                 .SetMidi("")
                 .AddTutorAnimation("ABW_Talk1", new SpriteAnimation(17, me1))
                 .AddTutorAnimation("ABW_Talk2", new SpriteAnimation(15, me2))

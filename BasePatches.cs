@@ -60,26 +60,18 @@ namespace AlexBWFieldtrips
             }
             return true;
         }
-
+#if DEBUG
         [HarmonyPatch(typeof(PitstopGameManager), "AwakeFunction"), HarmonyPostfix]
         static void InsertFieldTrip(ref WeightedFieldTrip[] ___tierOneTrips, ref FieldTripObject ___forcedTrip)
         {
-#if DEBUG
             ___forcedTrip = AlexBWFieldTripsPlugin.assetMan.Get<FieldTripObject>("FieldTrip");
             ___tierOneTrips = [new WeightedFieldTrip()
             {
                 selection = AlexBWFieldTripsPlugin.assetMan.Get<FieldTripObject>("FieldTrip"),
                 weight = 150
             }];
+        }
 #endif
-        }
-
-        [HarmonyPatch(typeof(FieldTripEntranceRoomFunction), nameof(FieldTripEntranceRoomFunction.Initialize)), HarmonyPostfix]
-        static void IsThatOneClip(ref bool ___available, ref SoundObject ___audCampIntro)
-        {
-            if (___available)
-                ___audCampIntro = CoreGameManager.Instance.currentFieldTrip.intro;
-        }
         [HarmonyPatch(typeof(MinigameBase), "Pause"), HarmonyPostfix]
         private static void PauseSoundObject(bool ___paused, string ___midiSong, MinigameName ___minigame)
         {
@@ -99,7 +91,9 @@ namespace AlexBWFieldtrips
             _musObj = AccessTools.Field(typeof(MinigameBase), "musicObject"),
             _currentSource = AccessTools.Field(typeof(MusicManager), "currentSource"),
             _audioSource = AccessTools.Field(typeof(MusicManager), "fileSoure"),
-            _minigame = AccessTools.DeclaredField(typeof(MinigameBase), "minigame");
+            _minigame = AccessTools.DeclaredField(typeof(MinigameBase), "minigame"),
+            _soundOnStart = AccessTools.DeclaredField(typeof(AudioManager), "soundOnStart"),
+            _subtitleColor = AccessTools.DeclaredField(typeof(AudioManager), "subtitleColor");
         [HarmonyPatch(typeof(MinigameTutorial), nameof(MinigameTutorial.Initialize)), HarmonyPostfix]
         static void ResultSoundObject(MinigameTutorial __instance)
         {
@@ -124,7 +118,7 @@ namespace AlexBWFieldtrips
             }
         }
         [HarmonyPatch(typeof(FieldTripEntranceRoomFunction), "Initialize"), HarmonyPostfix]
-        private static void FieldTripLines(bool ___available, ref SoundObject ___audNoPass)
+        private static void FieldTripLines(bool ___available, ref SoundObject ___audNoPass, Transform ___busObjects)
         {
             if (___available)
             {
@@ -132,6 +126,17 @@ namespace AlexBWFieldtrips
                 if (trip.trip.ToStringExtended() == "AlexBWWorld")
                 {
                     ___audNoPass = AlexBWFieldTripsPlugin.assetMan.Get<SoundObject>("ABW/BusPass");
+                    var bus = ___busObjects.Find("Bus");
+                    foreach (var _meshrender in bus.GetComponentsInChildren<MeshRenderer>(true))
+                    {
+                        _meshrender.transform.localPosition = new(_meshrender.transform.localPosition.x, 6.75f, _meshrender.transform.localPosition.z);
+                        _meshrender.transform.localScale = Vector3.one * 15f;
+                        _meshrender.material = AlexBWFieldTripsPlugin.assetMan.Get<Material>("PortalEntranceMat");
+                    }
+                    _soundOnStart.SetValue(bus.GetComponent<PropagatedAudioManager>(), new SoundObject[] { AlexBWFieldTripsPlugin.assetMan.Get<SoundObject>("PortalAmbience") });
+                    var clicktrigger = ___busObjects.Find("TripEntranceTrigger");
+                    clicktrigger.localPosition = new(bus.localPosition.x, clicktrigger.localPosition.y, clicktrigger.localPosition.z);
+                    _subtitleColor.SetValue(___busObjects.Find("AnimatedTripBaldi").GetComponent<PropagatedAudioManager>(), trip.intro.color);
                 }
             }
         }

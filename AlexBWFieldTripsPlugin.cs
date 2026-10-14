@@ -61,6 +61,20 @@ namespace AlexBWFieldtrips
                 var toggle = CreateToggle("CartTimeTrialGhosts", "Time Trial Ghosts", CartTimeTrialGhosts.Value, new Vector2(75f, 40f), 198f);
                 AddTooltip(toggle, "If enabled, ghosts can appear\nfor Coasting Cart Racing's time trials\nand you are able to record your own attempted time!");
                 toggle.GetComponentInChildren<StandardMenuButton>().OnPress.AddListener(() => CartTimeTrialGhosts.Value = toggle.Value);
+                if (CoreGameManager.Instance == null && BaseGameManager.Instance == null)
+                {
+                    void GoToTrip()
+                    {
+                        optionsMenu.Close();
+                        var gameloader = GameObject.FindObjectsOfType<GameLoader>(true).First(x => x.gameObject.scene == optionsMenu.gameObject.scene);
+                        gameloader.CheckSeed();
+                        gameloader.Initialize(2);
+                        gameloader.LoadLevel(assetMan.Get<SceneObject>("ForcedFieldTrip"));
+                        gameloader.SetMode(1);
+                        gameloader.SetSave(false);
+                    }
+                    var button = CreateTextButton(new UnityAction(GoToTrip), "ABWLandHeadTo", "Visit ABWLand", new Vector2(75f, -120f), MTM101BaldAPI.UI.BaldiFonts.ComicSans24, TextAlignmentOptions.Bottom, new Vector2(125f, 100f), Color.black);
+                }
             }
         }
 
@@ -85,7 +99,20 @@ namespace AlexBWFieldtrips
                 { "Mgm_DededeCartRacing_Win", "You've placed {0}, way to go! Now that was a coasting experience!" },
                 { "Mgm_DededeCartRacing_Lose", "You've placed {0}, but the race was already over..." },
                 { "Mgm_DededeCartRacing_Perfect", "No Hit Bonus! +{0} YTPs" },
-                { "Mgm_DededeCartRacing_FinalScore", "Final score: {0}\n\n" }
+                { "Mgm_DededeCartRacing_FinalScore", "Final score: {0}\n\n" },
+
+                { "Vfx_ABW_BusPass", "Dude... You're gonna need a bus pass to enter through my portal!" },
+                { "Vfx_ABW_FunlandTrip", "Oh hello there!" },
+                { "Vfx_ABW_FunlandTrip1", "Let's go to my funland!" },
+                { "Vfx_ABW_FunlandIntro", "Welcome to my funland!" },
+                { "Vfx_ABW_FunlandIntro1", "It's, pretty much uh..." },
+                { "Vfx_ABW_FunlandIntro2", "It looks, like..." },
+                { "Vfx_ABW_FunlandIntro3", "I've built this place all by myself..." },
+                { "Vfx_ABW_FunlandIntro4", "You could play the minigames though!" },
+                { "Vfx_ABW_FunlandIntro5", "I have two of them which you can search for students" },
+                { "Vfx_ABW_FunlandIntro6", "which one of them is unique from the others." },
+                { "Vfx_ABW_FunlandIntro7", "Or, you could just go to the cart ride racing adventure!" },
+                { "Vfx_ABW_FunlandIntro8", "But I dunno about you." }
             });
             assetMan.Add<Sprite[]>("Tutorial/WANTED", [
                 AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "6.jpg")
@@ -114,6 +141,46 @@ namespace AlexBWFieldtrips
                     "ABW/BusPass",
                     "ABW/TripIntro",
                     ]);
+            assetMan.Get<SoundObject>("ABW/FieldTrip").additionalKeys = [
+                new(){
+                    key = "Vfx_ABW_FunlandTrip1",
+                    time = 1.13f
+                }
+                ];
+            assetMan.Get<SoundObject>("ABW/TripIntro").additionalKeys = [
+                new(){
+                    key = "Vfx_ABW_FunlandIntro1",
+                    time = 1.87f
+                },
+                new(){
+                    key = "Vfx_ABW_FunlandIntro2",
+                    time = 4.47f
+                },
+                new(){
+                    key = "Vfx_ABW_FunlandIntro3",
+                    time = 6.690f
+                },
+                new(){
+                    key = "Vfx_ABW_FunlandIntro4",
+                    time = 11.044f
+                },
+                new(){
+                    key = "Vfx_ABW_FunlandIntro5",
+                    time = 12.963f
+                },
+                new(){
+                    key = "Vfx_ABW_FunlandIntro6",
+                    time = 15.72f
+                },
+                new(){
+                    key = "Vfx_ABW_FunlandIntro7",
+                    time = 18.33f
+                },
+                new(){
+                    key = "Vfx_ABW_FunlandIntro8",
+                    time = 22.136f
+                }
+                ];
             var tracktex = AssetLoader.TextureFromMod(this, "cartdash_track.png");
             var track = Sprite.Create(tracktex, new Rect(0f, 0f, tracktex.width, tracktex.height), Vector2.one / 2f, 1f, 0, SpriteMeshType.FullRect, new Vector4(0f, 4f, 0f, 4f));
             assetMan.Add("CartRace/PositionUI", track);
@@ -153,6 +220,7 @@ namespace AlexBWFieldtrips
             assetMan.Add("ABW/Tutorial2", AssetLoader.SpritesFromSpritesheet(19, 1, 1f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ABW_Tutorial2.png")));
             assetMan.Add("ABWLand/Cart", AssetLoader.SpritesFromSpritesheet(8, 1, 21f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "CartRideIntoDrumDash.png")));
             assetMan.Add("ABWLand/Telescope", AssetLoader.SpritesFromSpritesheet(8, 1, 21f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ABWLandTelescope.png")));
+            assetMan.Add<Texture2D[]>("ABWLand/Door", [AssetLoader.TextureFromMod(this, "ABWLand_Entrance.png"), AssetLoader.TextureFromMod(this, "ABWLand_Exit.png")]);
         }
 
         private IEnumerator PreLoad()
@@ -306,8 +374,9 @@ namespace AlexBWFieldtrips
             audManCart.ignoreListenerPause = true;
             audManCart.volumeModifier = 0.1f;
             _disableSubtitles.SetValue(audManCart, true);
+            FieldInfo _soundOnStart = AccessTools.DeclaredField(typeof(AudioManager), "soundOnStart");
             audManCart.ReflectionSetVariable("loopOnStart", true);
-            audManCart.ReflectionSetVariable("soundOnStart", new SoundObject[] { assetMan.Get<SoundObject>("CartRace/Engine") });
+            _soundOnStart.SetValue(audManCart, new SoundObject[] { assetMan.Get<SoundObject>("CartRace/Engine") });
             var lineren = new GameObject("Liner", typeof(LineRenderer)).GetComponent<LineRenderer>();
             lineren.transform.SetParent(cartPre.transform, false);
             lineren.transform.localPosition = new Vector3(2f, -4.25f, 0f);
@@ -669,10 +738,55 @@ namespace AlexBWFieldtrips
             render.gameObject.layer = LayerMask.NameToLayer("Billboard");
             theMoon.transform.localScale = Vector3.one * 3f;
             theMoon.transform.localPosition = new(930f, -250f, 696f);
+
+            FieldInfo _objectsToToggle = AccessTools.DeclaredField(typeof(FieldTripBaseRoomFunction), "objectToToggleAfterMinigame");
+            var bus = objectBase.Find("Bus(Clone)");
+            var busoccupied = objectBase.Find("Bus_Occupied(Clone)");
+            var meshrender = busoccupied.GetComponentInChildren<MeshRenderer>(true);
+            var portalmat = Instantiate(meshrender.material);
+            portalmat.name = "PortalToABWLand";
+            var doorways = assetMan.Get<Texture2D[]>("ABWLand/Door");
+            portalmat.SetMainTexture(doorways[1]);
+            meshrender.material = portalmat;
+            portalmat = Instantiate(meshrender.material);
+            portalmat.name = "EntranceToABWLand";
+            portalmat.SetMainTexture(doorways[0]);
+            assetMan.Add("PortalEntranceMat", portalmat);
+            bus.gameObject.SetActive(false);
+            busoccupied.gameObject.SetActive(true);
+            var wormholeAud = ObjectCreators.CreateSoundObject(AssetFinder.FindOfTypeWithName<AudioClip>("WormholeAmbience", true), "ABWLandPortal", SoundType.Effect, Color.white, 0f);
+            assetMan.Add("PortalAmbience", wormholeAud);
+            _soundOnStart.SetValue(busoccupied.GetComponent<PropagatedAudioManager>(), new SoundObject[] { wormholeAud });
+            foreach (var _meshrender in busoccupied.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                _meshrender.transform.localPosition = new(_meshrender.transform.localPosition.x, 6.75f, _meshrender.transform.localPosition.z);
+                _meshrender.transform.localScale = Vector3.one * 15f;
+                _meshrender.material = meshrender.material;
+            }
+            var clicktrigger = objectBase.Find("ExitTrigger(Clone)");
+            clicktrigger.localPosition = new(75f, clicktrigger.localPosition.y, clicktrigger.localPosition.z);
+            FieldInfo _subtitleColor = AccessTools.DeclaredField(typeof(AudioManager), "subtitleColor");
+            _subtitleColor.SetValue(objectBase.Find("AnimatedTripBaldi").GetComponent<PropagatedAudioManager>(), fieldtripLocation.intro.color);
+
+            var objectsToToggle = ((GameObject[])_objectsToToggle.GetValue(fieldtripRoomFunction)).ToList();
+            objectsToToggle.Remove(bus.gameObject);
+            objectsToToggle.Remove(busoccupied.gameObject);
+            _objectsToToggle.SetValue(fieldtripRoomFunction, objectsToToggle.ToArray());
+
             assetMan.Add("FieldTrip", fieldtripLocation);
             FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierOne);
             //FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierTwo);
             //FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierThree);
+
+            PitstopGameManager forcedTripManager = new FieldTripGameManagerBuilder()
+                .SetFieldTrip(fieldtripLocation)
+                .SetName("FieldTripManager_ABWLand")
+                .Build();
+            SceneObject forcedTripScene = Instantiate(AssetFinder.FindOfTypeWithName<SceneObject>("Camping", true));
+            forcedTripScene.name = "ABWLand";
+            forcedTripScene.levelTitle = "ABW";
+            forcedTripScene.manager = forcedTripManager;
+            assetMan.Add("ForcedFieldTrip", forcedTripScene);
         }
 
         private GameObject CreateStageBackground(GameObject bgSetTemplate, string name, Texture2D foreground, Texture2D foregroundBottom, Texture2D sky)

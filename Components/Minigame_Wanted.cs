@@ -100,6 +100,7 @@ public class Minigame_Wanted : Minigame
         Instance = null;
         ClearStudents();
         Destroy(camera.gameObject);
+        Destroy(cursorRaycasted?.gameObject);
         assignedLL.Ec.rooms.Remove(playroom);
         assignedLL.DestroyRoom(playroom);
         assignedLL.Ec.lightingOverride = false;

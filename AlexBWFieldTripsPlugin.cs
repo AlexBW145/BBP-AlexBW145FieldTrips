@@ -183,9 +183,10 @@ namespace AlexBWFieldtrips
                 }
                 else if (tile.roomId == sceneObjectOnAccident.levelAsset.rooms.IndexOf(playroom))
                 {
+                    var cellPos = tile.pos.Adjusted(new IntVector2(4, 22), Direction.North);
                     playroomPre.cells.Add(new()
                     {
-                        pos = tile.pos.Adjusted(new IntVector2(4, 22), Direction.North),
+                        pos = cellPos,
                         roomId = 1,
                         type = tile.type
                     });
@@ -194,6 +195,11 @@ namespace AlexBWFieldtrips
                         var posterData = sceneObjectOnAccident.levelAsset.posters.Find(p => p.position == tile.pos).GetNew();
                         posterData.position = posterData.position.Adjusted(new IntVector2(4, 22), Direction.North);
                         playroomPre.posterDatas.Add(posterData);
+                    }
+                    if (playroomPre.basicObjects.Exists(x => IntVector2.GetGridPosition(x.position) == cellPos))
+                    {
+                        playroomPre.entitySafeCells.Remove(cellPos);
+                        playroomPre.eventSafeCells.Remove(cellPos);
                     }
                 }
             }

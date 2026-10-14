@@ -100,10 +100,11 @@ public class Minigame_CartRacing : Minigame
         _system.FinishRun();
         if (save)
         {
+            bool useDateTime = false;
             _system.GetRun(RecordingType.Last, out var rundata);
             var data = new CartMinigameGhostRacerData();
             data.data = rundata.Serialize();
-            var FileName = $"CartRaceGhost_{PlayerFileManager.Instance.fileName}_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-sss")}";
+            var FileName = $"CartRaceGhost_{PlayerFileManager.Instance.fileName}_{(useDateTime ? DateTime.Now.ToString("yyyy-MM-dd_HH-mm-sss") : "Latest")}";
             data.Image = CartRacerController.PlayerInstance.render.sprite.texture.GetRawTextureData();
 
             var path = Application.persistentDataPath + $"/Modded/{AlexBWFieldTripsPlugin.PLUGIN_GUID}";
@@ -911,8 +912,8 @@ internal class CartGhostController : MonoBehaviour // From Tarodev's example gho
             }
             Destroy(gameObject);
         }
-        Destroy(gameObject);
         OnDestroy();
+        Destroy(gameObject);
     }
 }
 

@@ -26,6 +26,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using YamlDotNet.RepresentationModel;
 
 namespace AlexBWFieldtrips
 {
@@ -36,10 +37,19 @@ namespace AlexBWFieldtrips
     [BepInProcess("BALDI.exe")]
     public class AlexBWFieldTripsPlugin : BaseUnityPlugin
     {
-        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.0.0";
+        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.1.0";
         public static AlexBWFieldTripsPlugin Instance { get; private set; }
         public static readonly AssetManager assetMan = new AssetManager();
         internal static ConfigEntry<bool> CartTimeTrialGhosts;
+        private static Dictionary<Language, Dictionary<object, object>> LocalizationSwaps = new();
+        internal static Dictionary<Language, string> LocalizationStopwatch = new();
+        /*[HarmonyPatch(typeof(AssetManager), "GetInternal"), HarmonyPostfix]
+        private static void GetLocalized(ref object __result)
+        {
+            var curLang = PlayerFileManager.Instance.currentLanguage;
+            if (LocalizationSwaps[curLang].ContainsKey(__result))
+                __result = LocalizationSwaps[curLang][__result];
+        }*/
 
         private void Awake()
         {
@@ -85,8 +95,82 @@ namespace AlexBWFieldtrips
             {
                 handler.AddCategory<ModOptions>("ABW's Funland");
             };
-            AssetLoader.LocalizationFromFunction((lang) => new System.Collections.Generic.Dictionary<string, string>()
+            AssetLoader.LocalizationFromFunction((lang) =>
             {
+                LocalizationSwaps.Add(lang, new()); // Prototype of localization manager stuff using `.yaml` files
+                var path = Path.Combine(AssetLoader.GetModPath(this), "Localization");
+                foreach (var file in Directory.GetFiles(path, "*.yaml"))
+                {
+                    using (var reader = new StringReader(File.ReadAllText(file)))
+                    {
+                        var yaml = new YamlStream();
+                        yaml.Load(reader);
+
+                        var mapping = (YamlMappingNode)yaml.Documents[0].RootNode;
+                        var properties = (YamlSequenceNode)mapping.Children[new YamlScalarNode("Properties")];
+                        var langString = lang.ToStringExtended();
+                        if (langString == ((YamlScalarNode)properties.Children[0][new YamlScalarNode("Language")]).Value)
+                        {
+                            LocalizationStopwatch.Add(lang, ((YamlScalarNode)properties.Children[0][new YamlScalarNode("StopwatchFormat")]).Value);
+                            var assetsTex2D = assetMan.GetAll<Texture2D>().ToList();
+                            assetsTex2D.AddRange(assetMan.GetAll<Texture2D[]>().SelectMany(x => x));
+                            var assetsSpr = assetMan.GetAll<Sprite>().ToList();
+                            assetsSpr.AddRange(assetMan.GetAll<Sprite[]>().SelectMany(x => x));
+                            var node = mapping.Children[new YamlScalarNode("TextureSwaps")];
+                            if (node is YamlSequenceNode)
+                            {
+                                var textureSwaps = (YamlSequenceNode)node;
+                                foreach (YamlMappingNode swaps in textureSwaps.Children)
+                                {
+                                    var toReplace = ((YamlScalarNode)swaps.Children[0].Key).Value;
+                                    var textureSwap = ((YamlScalarNode)swaps.Children[0].Value).Value;
+                                    bool replaced = false;
+                                    foreach (var sprite in assetsSpr)
+                                    {
+                                        if (sprite.name == toReplace)
+                                        {
+                                            if (LocalizationSwaps[lang].ContainsKey(sprite)) break;
+                                            LocalizationSwaps[lang].Add(sprite, lang == Language.English ? sprite : AssetLoader.SpriteFromFile(Path.Combine(path, textureSwap), sprite.pivot, sprite.pixelsPerUnit));
+                                            replaced = true;
+                                            break;
+                                        }
+                                    }
+                                    if (replaced) continue;
+                                    foreach (var tex2D in assetsTex2D)
+                                    {
+                                        if (tex2D.name == toReplace)
+                                        {
+                                            if (LocalizationSwaps[lang].ContainsKey(tex2D)) break;
+                                            LocalizationSwaps[lang].Add(tex2D, lang == Language.English ? tex2D : AssetLoader.TextureFromFile(Path.Combine(path, textureSwap)));
+                                            replaced = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            try
+                            {
+                                LocalizationData localizationData = JsonUtility.FromJson<LocalizationData>(File.ReadAllText(Path.Combine(path, Path.GetFileNameWithoutExtension(file) + ".json")));
+                                Dictionary<string, string> localizedText = new();
+                                foreach (LocalizationItem item in localizationData.items)
+                                {
+                                    if (localizedText.ContainsKey(item.key))
+                                        localizedText[item.key] = item.value;
+                                    else
+                                        localizedText.Add(item.key, item.value);
+                                }
+                                return localizedText;
+                            }
+                            catch (Exception E)
+                            {
+                                throw E;
+                            }
+                        }
+                    }
+                }
+                return new System.Collections.Generic.Dictionary<string, string>()
+            {
+
                 { "Level_Trip_AlexBWWorld", "AlexBW145's Funland" },
 
                 { "Mgm_SuperWanted64DS_Title", "WANTED!" },
@@ -113,13 +197,27 @@ namespace AlexBWFieldtrips
                 { "Vfx_ABW_FunlandIntro6", "which one of them is unique from the others." },
                 { "Vfx_ABW_FunlandIntro7", "Or, you could just go to the cart ride racing adventure!" },
                 { "Vfx_ABW_FunlandIntro8", "But I dunno about you." }
-            });
+            };
+            }
+            );
             assetMan.Add<Sprite[]>("Tutorial/WANTED", [
                 AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "6.jpg")
                 ]);
+            var pages = assetMan.Get<Sprite[]>("Tutorial/WANTED");
+            for (int i = 0; i < pages.Length; i++)
+            {
+                pages[i].name = $"SprTutorialPage{i}_WANTED";
+                pages[i].texture.name = $"TutorialPage{i}_WANTED";
+            }
             assetMan.Add<Sprite[]>("Tutorial/CoastingCartRacing", [
                 AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "6.jpg")
                 ]);
+            pages = assetMan.Get<Sprite[]>("Tutorial/CoastingCartRacing");
+            for (int i = 0; i < pages.Length; i++)
+            {
+                pages[i].name = $"SprTutorialPage{i}_CoastingCartRacing";
+                pages[i].texture.name = $"TutorialPage{i}_CoastingCartRacing";
+            }
             Color him = new Color(0.1921568627f, 0.5411764706f, 1f);
             assetMan.AddRange<SoundObject>([
                 ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "WANTED_DrumRoll.wav"), "WANTED_DrumRoll", SoundType.Effect, Color.white),

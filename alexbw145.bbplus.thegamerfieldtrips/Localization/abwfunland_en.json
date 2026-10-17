@@ -1,0 +1,28 @@
+{"items":[
+    { "key":"Level_Trip_AlexBWWorld", "value":"AlexBW145's Funland" },
+
+    { "key":"Mgm_SuperWanted64DS_Title", "value":"WANTED!" },
+    { "key":"Mgm_SuperWanted64DS_Desc", "value":"Looks like the students are scattered around, but only one is different from the rest!" },
+    { "key":"Mgm_SuperWanted64DS_Win", "value":"You've managed to reach to that required score! Way to go!" },
+    { "key":"Mgm_SuperWanted64DS_Lose", "value":"School's out! Looks like you did not make it to the required score." },
+
+    { "key":"Mgm_DededeCartRacing_Title", "value":"Coasting Cart Racing" },
+    { "key":"Mgm_DededeCartRacing_Desc", "value":"Race against 7 other participants for the top 4! Watch out for incoming obstacles!" },
+    { "key":"Mgm_DededeCartRacing_Win", "value":"You've placed {0}, way to go! Now that was a coasting experience!" },
+    { "key":"Mgm_DededeCartRacing_Lose", "value":"You've placed {0}, but the race was already over..." },
+    { "key":"Mgm_DededeCartRacing_Perfect", "value":"No Hit Bonus! +{0} YTPs" },
+    { "key":"Mgm_DededeCartRacing_FinalScore", "value":"Final score: {0}\n\n" },
+
+    { "key":"Vfx_ABW_BusPass", "value":"Dude... You're gonna need a bus pass to enter through my portal!" },
+    { "key":"Vfx_ABW_FunlandTrip", "value":"Oh hello there!" },
+    { "key":"Vfx_ABW_FunlandTrip1", "value":"Let's go to my funland!" },
+    { "key":"Vfx_ABW_FunlandIntro", "value":"Welcome to my funland!" },
+    { "key":"Vfx_ABW_FunlandIntro1", "value":"It's, pretty much uh..." },
+    { "key":"Vfx_ABW_FunlandIntro2", "value":"It looks, like..." },
+    { "key":"Vfx_ABW_FunlandIntro3", "value":"I've built this place all by myself..." },
+    { "key":"Vfx_ABW_FunlandIntro4", "value":"You could play the minigames though!" },
+    { "key":"Vfx_ABW_FunlandIntro5", "value":"I have two of them which you can search for students" },
+    { "key":"Vfx_ABW_FunlandIntro6", "value":"which one of them is unique from the others." },
+    { "key":"Vfx_ABW_FunlandIntro7", "value":"Or, you could just go to the cart ride racing adventure!" },
+    { "key":"Vfx_ABW_FunlandIntro8", "value":"But I dunno about you." }
+]}

@@ -54,7 +54,10 @@ namespace AlexBWFieldtrips
                 seconds = Mathf.Floor(gameTime % 60f),
                 minutes = Mathf.Floor(gameTime / 60f),
                 miliseconds = (gameTime % 1) * 1000;
-                ___scoreTmp.text = string.Format("{0:00}:{1:00}.{2:000}", minutes, seconds, miliseconds);
+                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe(PlayerFileManager.Instance.currentLanguage);
+                if (string.IsNullOrEmpty(localization))
+                    localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
+                ___scoreTmp.text = string.Format(localization, minutes, seconds, miliseconds); // "{0:00}:{1:00}.{2:000}"
                 __instance.StopAllCoroutines();
                 return false;
             }
@@ -308,10 +311,13 @@ namespace AlexBWFieldtrips
                 seconds = Mathf.Floor(gameTime % 60f),
                 minutes = Mathf.Floor(gameTime / 60f),
                 miliseconds = (gameTime % 1) * 1000;
+                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe(PlayerFileManager.Instance.currentLanguage);
+                if (string.IsNullOrEmpty(localization))
+                    localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
                 if (result)
-                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format("{0:00}:{1:00}.{2:000}", minutes, seconds, miliseconds)) + string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_HighScore"), rank + 1);
+                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format(localization, minutes, seconds, miliseconds)) + string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_HighScore"), rank + 1);
                 else
-                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format("{0:00}:{1:00}.{2:000}", minutes, seconds, miliseconds)) + LocalizationManager.Instance.GetLocalizedText("Mgm_LoseEndless");
+                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format(localization, minutes, seconds, miliseconds)) + LocalizationManager.Instance.GetLocalizedText("Mgm_LoseEndless");
                 return false;
             }
             return true;
@@ -325,7 +331,9 @@ namespace AlexBWFieldtrips
 
                 ___titleTmp.text = LocalizationManager.Instance.GetLocalizedText(nameKey) + " " + LocalizationManager.Instance.GetLocalizedText("Mgm_Leaderboard");
                 List<CartMinigameScore> sortedScores = ModdedFieldTripScoreManager.Instance.GetSortedScoresForMinigame(enumName).Cast<CartMinigameScore>().ToList();
-
+                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe(PlayerFileManager.Instance.currentLanguage);
+                if (string.IsNullOrEmpty(localization))
+                    localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
                 for (int i = 0; i < ___nameTmp.Length; i++)
                 {
                     if (sortedScores != null && i < sortedScores.Count)
@@ -335,12 +343,12 @@ namespace AlexBWFieldtrips
                         seconds = Mathf.Floor(gameTime % 60f),
                         minutes = Mathf.Floor(gameTime / 60f),
                         miliseconds = (gameTime % 1) * 1000;
-                        ___valueTmp[i].text = string.Format("{0:00}:{1:00}.{2:000}", minutes, seconds, miliseconds);
+                        ___valueTmp[i].text = string.Format(localization, minutes, seconds, miliseconds);
                     }
                     else
                     {
                         ___nameTmp[i].text = LocalizationManager.Instance.GetLocalizedText("Name_Baldi");
-                        ___valueTmp[i].text = "99:99.999";
+                        ___valueTmp[i].text = string.Format(localization, "99", "99", "999");
                     }
                     ___valueTmp[i].rectTransform.sizeDelta = new Vector2(132f, ___valueTmp[i].rectTransform.sizeDelta.y);
                 }

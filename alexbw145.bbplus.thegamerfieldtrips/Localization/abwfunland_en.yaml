@@ -1,0 +1,9 @@
+Properties:
+  - Language: English
+    StopwatchFormat: |-
+      {0:00}:{1:00}.{2:000}
+TextureSwaps:
+  - SprTutorialPage2_CoastingCartRacing: null
+  - SprTutorialPage3_CoastingCartRacing: null
+  - SprTutorialPage4_CoastingCartRacing: null
+AudioSwaps: null

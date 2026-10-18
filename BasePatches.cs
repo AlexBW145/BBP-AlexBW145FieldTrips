@@ -54,7 +54,7 @@ namespace AlexBWFieldtrips
                 seconds = Mathf.Floor(gameTime % 60f),
                 minutes = Mathf.Floor(gameTime / 60f),
                 miliseconds = (gameTime % 1) * 1000;
-                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe(PlayerFileManager.Instance.currentLanguage);
+                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
                 if (string.IsNullOrEmpty(localization))
                     localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
                 ___scoreTmp.text = string.Format(localization, minutes, seconds, miliseconds); // "{0:00}:{1:00}.{2:000}"
@@ -96,7 +96,8 @@ namespace AlexBWFieldtrips
             _audioSource = AccessTools.Field(typeof(MusicManager), "fileSoure"),
             _minigame = AccessTools.DeclaredField(typeof(MinigameBase), "minigame"),
             _soundOnStart = AccessTools.DeclaredField(typeof(AudioManager), "soundOnStart"),
-            _subtitleColor = AccessTools.DeclaredField(typeof(AudioManager), "subtitleColor");
+            _subtitleColor = AccessTools.DeclaredField(typeof(AudioManager), "subtitleColor"),
+            _currentSubLang = AccessTools.DeclaredField(typeof(LocalizationManager), "currentSubLang");
         [HarmonyPatch(typeof(MinigameTutorial), nameof(MinigameTutorial.Initialize)), HarmonyPostfix]
         static void ResultSoundObject(MinigameTutorial __instance)
         {
@@ -311,7 +312,7 @@ namespace AlexBWFieldtrips
                 seconds = Mathf.Floor(gameTime % 60f),
                 minutes = Mathf.Floor(gameTime / 60f),
                 miliseconds = (gameTime % 1) * 1000;
-                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe(PlayerFileManager.Instance.currentLanguage);
+                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
                 if (string.IsNullOrEmpty(localization))
                     localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
                 if (result)
@@ -331,7 +332,7 @@ namespace AlexBWFieldtrips
 
                 ___titleTmp.text = LocalizationManager.Instance.GetLocalizedText(nameKey) + " " + LocalizationManager.Instance.GetLocalizedText("Mgm_Leaderboard");
                 List<CartMinigameScore> sortedScores = ModdedFieldTripScoreManager.Instance.GetSortedScoresForMinigame(enumName).Cast<CartMinigameScore>().ToList();
-                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe(PlayerFileManager.Instance.currentLanguage);
+                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
                 if (string.IsNullOrEmpty(localization))
                     localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
                 for (int i = 0; i < ___nameTmp.Length; i++)

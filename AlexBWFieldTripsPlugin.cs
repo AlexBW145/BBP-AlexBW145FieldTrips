@@ -97,7 +97,8 @@ namespace AlexBWFieldtrips
             };
             AssetLoader.LocalizationFromFunction((lang) =>
             {
-                LocalizationSwaps.Add(lang, new()); // Prototype of localization manager stuff using `.yaml` files
+                if (!LocalizationSwaps.ContainsKey(lang))
+                    LocalizationSwaps.Add(lang, new()); // Prototype of localization manager stuff using `.yaml` files
                 var path = Path.Combine(AssetLoader.GetModPath(this), "Localization");
                 foreach (var file in Directory.GetFiles(path, "*.yaml"))
                 {
@@ -111,43 +112,8 @@ namespace AlexBWFieldtrips
                         var langString = lang.ToStringExtended();
                         if (langString == ((YamlScalarNode)properties.Children[0][new YamlScalarNode("Language")]).Value)
                         {
-                            LocalizationStopwatch.Add(lang, ((YamlScalarNode)properties.Children[0][new YamlScalarNode("StopwatchFormat")]).Value);
-                            var assetsTex2D = assetMan.GetAll<Texture2D>().ToList();
-                            assetsTex2D.AddRange(assetMan.GetAll<Texture2D[]>().SelectMany(x => x));
-                            var assetsSpr = assetMan.GetAll<Sprite>().ToList();
-                            assetsSpr.AddRange(assetMan.GetAll<Sprite[]>().SelectMany(x => x));
-                            var node = mapping.Children[new YamlScalarNode("TextureSwaps")];
-                            if (node is YamlSequenceNode)
-                            {
-                                var textureSwaps = (YamlSequenceNode)node;
-                                foreach (YamlMappingNode swaps in textureSwaps.Children)
-                                {
-                                    var toReplace = ((YamlScalarNode)swaps.Children[0].Key).Value;
-                                    var textureSwap = ((YamlScalarNode)swaps.Children[0].Value).Value;
-                                    bool replaced = false;
-                                    foreach (var sprite in assetsSpr)
-                                    {
-                                        if (sprite.name == toReplace)
-                                        {
-                                            if (LocalizationSwaps[lang].ContainsKey(sprite)) break;
-                                            LocalizationSwaps[lang].Add(sprite, lang == Language.English ? sprite : AssetLoader.SpriteFromFile(Path.Combine(path, textureSwap), sprite.pivot, sprite.pixelsPerUnit));
-                                            replaced = true;
-                                            break;
-                                        }
-                                    }
-                                    if (replaced) continue;
-                                    foreach (var tex2D in assetsTex2D)
-                                    {
-                                        if (tex2D.name == toReplace)
-                                        {
-                                            if (LocalizationSwaps[lang].ContainsKey(tex2D)) break;
-                                            LocalizationSwaps[lang].Add(tex2D, lang == Language.English ? tex2D : AssetLoader.TextureFromFile(Path.Combine(path, textureSwap)));
-                                            replaced = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
+                            if (!LocalizationStopwatch.ContainsKey(lang))
+                                LocalizationStopwatch.Add(lang, ((YamlScalarNode)properties.Children[0][new YamlScalarNode("StopwatchFormat")]).Value);
                             try
                             {
                                 LocalizationData localizationData = JsonUtility.FromJson<LocalizationData>(File.ReadAllText(Path.Combine(path, Path.GetFileNameWithoutExtension(file) + ".json")));
@@ -206,8 +172,8 @@ namespace AlexBWFieldtrips
             var pages = assetMan.Get<Sprite[]>("Tutorial/WANTED");
             for (int i = 0; i < pages.Length; i++)
             {
-                pages[i].name = $"SprTutorialPage{i}_WANTED";
-                pages[i].texture.name = $"TutorialPage{i}_WANTED";
+                pages[i].name = $"SprTutorialPage{i + 1}_WANTED";
+                pages[i].texture.name = $"TutorialPage{i + 1}_WANTED";
             }
             assetMan.Add<Sprite[]>("Tutorial/CoastingCartRacing", [
                 AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "CoastingCartRacing", "6.jpg")
@@ -215,8 +181,8 @@ namespace AlexBWFieldtrips
             pages = assetMan.Get<Sprite[]>("Tutorial/CoastingCartRacing");
             for (int i = 0; i < pages.Length; i++)
             {
-                pages[i].name = $"SprTutorialPage{i}_CoastingCartRacing";
-                pages[i].texture.name = $"TutorialPage{i}_CoastingCartRacing";
+                pages[i].name = $"SprTutorialPage{i + 1}_CoastingCartRacing";
+                pages[i].texture.name = $"TutorialPage{i + 1}_CoastingCartRacing";
             }
             Color him = new Color(0.1921568627f, 0.5411764706f, 1f);
             assetMan.AddRange<SoundObject>([

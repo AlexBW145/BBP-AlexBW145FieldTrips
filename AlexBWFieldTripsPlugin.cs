@@ -11,6 +11,7 @@ using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
+using MultiLanguage;
 using PlusStudioLevelFormat;
 using PlusStudioLevelLoader;
 using System;
@@ -26,7 +27,6 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using YamlDotNet.RepresentationModel;
 
 namespace AlexBWFieldtrips
 {
@@ -34,22 +34,15 @@ namespace AlexBWFieldtrips
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.2.0.1")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("thumbly.baldiplus.fieldtripAPI", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("alexbw145.bbplus.multilanguageapi", BepInDependency.DependencyFlags.HardDependency)]
     [BepInProcess("BALDI.exe")]
     public class AlexBWFieldTripsPlugin : BaseUnityPlugin
     {
-        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.1.0";
+        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.1.1";
         public static AlexBWFieldTripsPlugin Instance { get; private set; }
         public static readonly AssetManager assetMan = new AssetManager();
         internal static ConfigEntry<bool> CartTimeTrialGhosts;
-        private static Dictionary<Language, Dictionary<object, object>> LocalizationSwaps = new();
-        internal static Dictionary<Language, string> LocalizationStopwatch = new();
-        /*[HarmonyPatch(typeof(AssetManager), "GetInternal"), HarmonyPostfix]
-        private static void GetLocalized(ref object __result)
-        {
-            var curLang = PlayerFileManager.Instance.currentLanguage;
-            if (LocalizationSwaps[curLang].ContainsKey(__result))
-                __result = LocalizationSwaps[curLang][__result];
-        }*/
+        internal static Dictionary<Language, Tuple<string, bool>> LocalizationStopwatch = new();
 
         private void Awake()
         {
@@ -97,73 +90,10 @@ namespace AlexBWFieldtrips
             };
             AssetLoader.LocalizationFromFunction((lang) =>
             {
-                if (!LocalizationSwaps.ContainsKey(lang))
-                    LocalizationSwaps.Add(lang, new()); // Prototype of localization manager stuff using `.yaml` files
-                var path = Path.Combine(AssetLoader.GetModPath(this), "Localization");
-                foreach (var file in Directory.GetFiles(path, "*.yaml"))
-                {
-                    using (var reader = new StringReader(File.ReadAllText(file)))
-                    {
-                        var yaml = new YamlStream();
-                        yaml.Load(reader);
-
-                        var mapping = (YamlMappingNode)yaml.Documents[0].RootNode;
-                        var properties = (YamlSequenceNode)mapping.Children[new YamlScalarNode("Properties")];
-                        var langString = lang.ToStringExtended();
-                        if (langString == ((YamlScalarNode)properties.Children[0][new YamlScalarNode("Language")]).Value)
-                        {
-                            if (!LocalizationStopwatch.ContainsKey(lang))
-                                LocalizationStopwatch.Add(lang, ((YamlScalarNode)properties.Children[0][new YamlScalarNode("StopwatchFormat")]).Value);
-                            try
-                            {
-                                LocalizationData localizationData = JsonUtility.FromJson<LocalizationData>(File.ReadAllText(Path.Combine(path, Path.GetFileNameWithoutExtension(file) + ".json")));
-                                Dictionary<string, string> localizedText = new();
-                                foreach (LocalizationItem item in localizationData.items)
-                                {
-                                    if (localizedText.ContainsKey(item.key))
-                                        localizedText[item.key] = item.value;
-                                    else
-                                        localizedText.Add(item.key, item.value);
-                                }
-                                return localizedText;
-                            }
-                            catch (Exception E)
-                            {
-                                throw E;
-                            }
-                        }
-                    }
-                }
-                return new System.Collections.Generic.Dictionary<string, string>()
-            {
-
-                { "Level_Trip_AlexBWWorld", "AlexBW145's Funland" },
-
-                { "Mgm_SuperWanted64DS_Title", "WANTED!" },
-                { "Mgm_SuperWanted64DS_Desc", "Looks like the students are scattered around, but only one is different from the rest!" },
-                { "Mgm_SuperWanted64DS_Win", "You've managed to reach to that required score! Way to go!" },
-                { "Mgm_SuperWanted64DS_Lose", "School's out! Looks like you did not make it to the required score." },
-
-                { "Mgm_DededeCartRacing_Title", "Coasting Cart Racing" },
-                { "Mgm_DededeCartRacing_Desc", "Race against 7 other participants for the top 4! Watch out for incoming obstacles!" },
-                { "Mgm_DededeCartRacing_Win", "You've placed {0}, way to go! Now that was a coasting experience!" },
-                { "Mgm_DededeCartRacing_Lose", "You've placed {0}, but the race was already over..." },
-                { "Mgm_DededeCartRacing_Perfect", "No Hit Bonus! +{0} YTPs" },
-                { "Mgm_DededeCartRacing_FinalScore", "Final score: {0}\n\n" },
-
-                { "Vfx_ABW_BusPass", "Dude... You're gonna need a bus pass to enter through my portal!" },
-                { "Vfx_ABW_FunlandTrip", "Oh hello there!" },
-                { "Vfx_ABW_FunlandTrip1", "Let's go to my funland!" },
-                { "Vfx_ABW_FunlandIntro", "Welcome to my funland!" },
-                { "Vfx_ABW_FunlandIntro1", "It's, pretty much uh..." },
-                { "Vfx_ABW_FunlandIntro2", "It looks, like..." },
-                { "Vfx_ABW_FunlandIntro3", "I've built this place all by myself..." },
-                { "Vfx_ABW_FunlandIntro4", "You could play the minigames though!" },
-                { "Vfx_ABW_FunlandIntro5", "I have two of them which you can search for students" },
-                { "Vfx_ABW_FunlandIntro6", "which one of them is unique from the others." },
-                { "Vfx_ABW_FunlandIntro7", "Or, you could just go to the cart ride racing adventure!" },
-                { "Vfx_ABW_FunlandIntro8", "But I dunno about you." }
-            };
+                var localization = Info.LoadLocalizationFromYaml(lang, out var results, "StopwatchFormat", "StopwatchAutosize");
+                if (!LocalizationStopwatch.ContainsKey(lang))
+                    LocalizationStopwatch.Add(lang, new(results["StopwatchFormat"], Convert.ToBoolean(results["StopwatchAutosize"])));
+                return localization;
             }
             );
             assetMan.Add<Sprite[]>("Tutorial/WANTED", [
@@ -352,6 +282,7 @@ namespace AlexBWFieldtrips
                 .SetMusic(findMusic)
                 .NeedsCursor()
                 .SetWinBonus(700)
+                .SetScoringType(ScoringType.HighestScore)
                 .Build().GetComponent<Minigame_Wanted>();
             studentfind.playroomPre = playroomPre;
             studentfind.minigameHud = Instantiate(FieldTripsAPI.minigameHudPref, studentfind.transform.Find("GameCanvas").Find("Game"));
@@ -401,6 +332,7 @@ namespace AlexBWFieldtrips
                 .SetEndText("Mgm_DededeCartRacing_Win", "Mgm_DededeCartRacing_Lose")
                 .SetMusic(assetMan.Get<LoopingSoundObject>("Music/CartRace"))
                 .SetWinBonus(1500)
+                .SetScoringType(ScoringType.LowestTime)
                 .Build().GetComponent<Minigame_CartRacing>();
             kartracing.minigameHud = Instantiate(FieldTripsAPI.minigameHudPref, kartracing.transform.Find("GameCanvas").Find("Game"));
             kartracing.audFinished = studentfind.timeBell;
@@ -966,7 +898,7 @@ namespace AlexBWFieldtrips
             }
         }
     }
-
+#if false
     [Serializable, Obsolete("Unavailable in FieldTripsAPI Port", true)]
     public class TripTuple
     {
@@ -1018,4 +950,5 @@ namespace AlexBWFieldtrips
             }
         }
     }
+#endif
 }

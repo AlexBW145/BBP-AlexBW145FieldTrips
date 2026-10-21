@@ -2,6 +2,7 @@ Properties:
   - Language: Japanese
     StopwatchFormat: |-
       {0:00}分{1:00}秒{2:000}ミリ秒
+    StopwatchAutosize: true
 TextureSwaps:
   - SprTutorialPage2_CoastingCartRacing: CoastingCartRacingTutorial2_jp.jpg
   - SprTutorialPage3_CoastingCartRacing: CoastingCartRacingTutorial3_jp.jpg

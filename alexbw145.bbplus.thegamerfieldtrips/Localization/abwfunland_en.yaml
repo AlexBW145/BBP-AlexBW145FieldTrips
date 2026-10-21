@@ -2,6 +2,7 @@ Properties:
   - Language: English
     StopwatchFormat: |-
       {0:00}:{1:00}.{2:000}
+    StopwatchAutosize: false
 TextureSwaps:
   - SprTutorialPage2_CoastingCartRacing: null
   - SprTutorialPage3_CoastingCartRacing: null

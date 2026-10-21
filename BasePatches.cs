@@ -54,10 +54,11 @@ namespace AlexBWFieldtrips
                 seconds = Mathf.Floor(gameTime % 60f),
                 minutes = Mathf.Floor(gameTime / 60f),
                 miliseconds = (gameTime % 1) * 1000;
-                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
-                if (string.IsNullOrEmpty(localization))
+                var localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
+                if (localization == null)
                     localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
-                ___scoreTmp.text = string.Format(localization, minutes, seconds, miliseconds); // "{0:00}:{1:00}.{2:000}"
+                ___scoreTmp.text = string.Format(localization.Item1, minutes, seconds, miliseconds); // "{0:00}:{1:00}.{2:000}"
+                ___scoreTmp.enableAutoSizing = localization.Item2;
                 __instance.StopAllCoroutines();
                 return false;
             }
@@ -160,7 +161,7 @@ namespace AlexBWFieldtrips
                         list.Add((CartMinigameScore)__instance.tripScores[i]);
                 }
                 var castedList = new List<FieldTripScore>(list);
-                _SortMinigameScores.Invoke(__instance, [castedList]);
+                _SortMinigameScores.Invoke(__instance, [castedList, false]);
                 __result = castedList;
                 return false;
             }
@@ -215,7 +216,7 @@ namespace AlexBWFieldtrips
                 bool flag = false;
                 CartMinigameScore tripScore = new CartMinigameScore(___minigame.ToStringExtended(), time, PlayerFileManager.Instance.fileName);
                 manager.tripScores.Add(tripScore);
-                List<CartMinigameScore> list = new List<CartMinigameScore>(manager.GetSortedScoresForMinigame(___minigame.ToStringExtended()).Cast<CartMinigameScore>());
+                List<CartMinigameScore> list = new List<CartMinigameScore>(manager.GetSortedScoresForMinigame(___minigame.ToStringExtended(), false).Cast<CartMinigameScore>());
                 for (int i = 0; i < list.Count && i < 5; i++)
                 {
                     if (list[i] == tripScore)
@@ -312,13 +313,13 @@ namespace AlexBWFieldtrips
                 seconds = Mathf.Floor(gameTime % 60f),
                 minutes = Mathf.Floor(gameTime / 60f),
                 miliseconds = (gameTime % 1) * 1000;
-                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
-                if (string.IsNullOrEmpty(localization))
+                var localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
+                if (localization == null)
                     localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
                 if (result)
-                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format(localization, minutes, seconds, miliseconds)) + string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_HighScore"), rank + 1);
+                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format(localization.Item1, minutes, seconds, miliseconds)) + string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_HighScore"), rank + 1);
                 else
-                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format(localization, minutes, seconds, miliseconds)) + LocalizationManager.Instance.GetLocalizedText("Mgm_LoseEndless");
+                    ___resultTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_FinalScore"), string.Format(localization.Item1, minutes, seconds, miliseconds)) + LocalizationManager.Instance.GetLocalizedText("Mgm_LoseEndless");
                 return false;
             }
             return true;
@@ -331,9 +332,9 @@ namespace AlexBWFieldtrips
                 string enumName = EnumExtensions.GetExtendedName<MinigameName>((int)minigame);
 
                 ___titleTmp.text = LocalizationManager.Instance.GetLocalizedText(nameKey) + " " + LocalizationManager.Instance.GetLocalizedText("Mgm_Leaderboard");
-                List<CartMinigameScore> sortedScores = ModdedFieldTripScoreManager.Instance.GetSortedScoresForMinigame(enumName).Cast<CartMinigameScore>().ToList();
-                string localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
-                if (string.IsNullOrEmpty(localization))
+                List<CartMinigameScore> sortedScores = ModdedFieldTripScoreManager.Instance.GetSortedScoresForMinigame(enumName, false).Cast<CartMinigameScore>().ToList();
+                var localization = AlexBWFieldTripsPlugin.LocalizationStopwatch.GetValueSafe((Language)_currentSubLang.GetValue(LocalizationManager.Instance));
+                if (localization == null)
                     localization = AlexBWFieldTripsPlugin.LocalizationStopwatch[Language.English];
                 for (int i = 0; i < ___nameTmp.Length; i++)
                 {
@@ -344,14 +345,15 @@ namespace AlexBWFieldtrips
                         seconds = Mathf.Floor(gameTime % 60f),
                         minutes = Mathf.Floor(gameTime / 60f),
                         miliseconds = (gameTime % 1) * 1000;
-                        ___valueTmp[i].text = string.Format(localization, minutes, seconds, miliseconds);
+                        ___valueTmp[i].text = string.Format(localization.Item1, minutes, seconds, miliseconds);
                     }
                     else
                     {
                         ___nameTmp[i].text = LocalizationManager.Instance.GetLocalizedText("Name_Baldi");
-                        ___valueTmp[i].text = string.Format(localization, "99", "99", "999");
+                        ___valueTmp[i].text = string.Format(localization.Item1, "99", "99", "999");
                     }
                     ___valueTmp[i].rectTransform.sizeDelta = new Vector2(132f, ___valueTmp[i].rectTransform.sizeDelta.y);
+                    ___valueTmp[i].enableAutoSizing = localization.Item2;
                 }
                 return false;
             }

@@ -8,6 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RootNamespace>AlexBWFieldtrips</RootNamespace>
+    <Configurations>Debug;Release;ReleaseLangless</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +20,7 @@
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>D:\SteamLibrary\steamapps\common\Baldi's Basics Plus\BALDI_Data\Managed\Assembly-CSharp.dll</HintPath>
@@ -27,7 +28,7 @@
     <Reference Include="MTM101BaldAPI">
       <HintPath>D:\SteamLibrary\steamapps\common\Baldi's Basics Plus\BepInEx\plugins\MTM101BaldAPI.dll</HintPath>
     </Reference>
-    <Reference Include="MultiLanguageAPI">
+    <Reference Include="MultiLanguageAPI" Condition="'$(Configuration)' != 'ReleaseLangless'">
       <HintPath>..\BBP MutliLanguage API\bin\Release\netstandard2.0\MultiLanguageAPI.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">

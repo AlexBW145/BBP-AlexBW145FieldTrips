@@ -11,7 +11,9 @@ using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
+#if !RELEASELANGLESS
 using MultiLanguage;
+#endif
 using PlusStudioLevelFormat;
 using PlusStudioLevelLoader;
 using System;
@@ -33,8 +35,11 @@ namespace AlexBWFieldtrips
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.2.0.1")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
+
     [BepInDependency("thumbly.baldiplus.fieldtripAPI", "1.2.2")]
+#if !RELEASELANGLESS
     [BepInDependency("alexbw145.bbplus.multilanguageapi", BepInDependency.DependencyFlags.HardDependency)]
+#endif
     [BepInProcess("BALDI.exe")]
     public class AlexBWFieldTripsPlugin : BaseUnityPlugin
     {
@@ -90,10 +95,45 @@ namespace AlexBWFieldtrips
             };
             AssetLoader.LocalizationFromFunction((lang) =>
             {
+#if RELEASELANGLESS
+                if (!LocalizationStopwatch.ContainsKey(lang))
+                    LocalizationStopwatch.Add(lang, new("{0:00}:{1:00}.{2:000}", false));
+                return new Dictionary<string, string>()
+                {
+
+                    { "Level_Trip_AlexBWWorld", "AlexBW145's Funland" },
+
+                    { "Mgm_SuperWanted64DS_Title", "WANTED!" },
+                    { "Mgm_SuperWanted64DS_Desc", "Looks like the students are scattered around, but only one is different from the rest!" },
+                    { "Mgm_SuperWanted64DS_Win", "You've managed to reach to that required score! Way to go!" },
+                    { "Mgm_SuperWanted64DS_Lose", "School's out! Looks like you did not make it to the required score." },
+
+                    { "Mgm_DededeCartRacing_Title", "Coasting Cart Racing" },
+                    { "Mgm_DededeCartRacing_Desc", "Race against 7 other participants for the top 4! Watch out for incoming obstacles!" },
+                    { "Mgm_DededeCartRacing_Win", "You've placed {0}, way to go! Now that was a coasting experience!" },
+                    { "Mgm_DededeCartRacing_Lose", "You've placed {0}, but the race was already over..." },
+                    { "Mgm_DededeCartRacing_Perfect", "No Hit Bonus! +{0} YTPs" },
+                    { "Mgm_DededeCartRacing_FinalScore", "Final score: {0}\n\n" },
+
+                    { "Vfx_ABW_BusPass", "Dude... You're gonna need a bus pass to enter through my portal!" },
+                    { "Vfx_ABW_FunlandTrip", "Oh hello there!" },
+                    { "Vfx_ABW_FunlandTrip1", "Let's go to my funland!" },
+                    { "Vfx_ABW_FunlandIntro", "Welcome to my funland!" },
+                    { "Vfx_ABW_FunlandIntro1", "It's, pretty much uh..." },
+                    { "Vfx_ABW_FunlandIntro2", "It looks, like..." },
+                    { "Vfx_ABW_FunlandIntro3", "I've built this place all by myself..." },
+                    { "Vfx_ABW_FunlandIntro4", "You could play the minigames though!" },
+                    { "Vfx_ABW_FunlandIntro5", "I have two of them which you can search for students" },
+                    { "Vfx_ABW_FunlandIntro6", "which one of them is unique from the others." },
+                    { "Vfx_ABW_FunlandIntro7", "Or, you could just go to the cart ride racing adventure!" },
+                    { "Vfx_ABW_FunlandIntro8", "But I dunno about you." }
+                };
+#else
                 var localization = Info.LoadLocalizationFromYaml(lang, out var results, "StopwatchFormat", "StopwatchAutosize");
                 if (!LocalizationStopwatch.ContainsKey(lang))
                     LocalizationStopwatch.Add(lang, new(results["StopwatchFormat"], Convert.ToBoolean(results["StopwatchAutosize"])));
                 return localization;
+#endif
             }
             );
             assetMan.Add<Sprite[]>("Tutorial/WANTED", [

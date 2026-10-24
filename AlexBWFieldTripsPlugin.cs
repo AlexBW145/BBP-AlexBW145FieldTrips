@@ -95,6 +95,7 @@ namespace AlexBWFieldtrips
             };
 #if RELEASELANGLESS
             AssetLoader.LocalizationFromFile(Path.Combine(AssetLoader.GetModPath(this), "Localization", "abwfunland_en.json"), Language.English);
+            LocalizationStopwatch.Add(Language.English, new("{0:00}:{1:00}.{2:000}", false));
 #else
             AssetLoader.LocalizationFromFunction((lang) =>
             {

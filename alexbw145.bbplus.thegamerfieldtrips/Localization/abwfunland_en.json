@@ -1,5 +1,7 @@
 {"items":[
     { "key":"Level_Trip_AlexBWWorld", "value":"AlexBW145's Funland" },
+    { "key":"But_Trip_ABWLand", "value":"<size=%20>ABW145's Funland</size>"},
+    { "key":"Men_ABWLandTrip", "value":"<size=%18>Welcome to AlexBW145's Lovely Funland, where you can enjoy two games for the price of one! Built in the coldest orbiting locations filled with coldium radiation, it's fair that no heatium radiation is present in this one and only space game land!</size>"},
 
     { "key":"Mgm_SuperWanted64DS_Title", "value":"WANTED!" },
     { "key":"Mgm_SuperWanted64DS_Desc", "value":"Looks like the students are scattered around, but only one is different from the rest!" },

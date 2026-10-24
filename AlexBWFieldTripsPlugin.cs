@@ -27,7 +27,6 @@ using ThumblysFieldTripsAPI.Builders;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace AlexBWFieldtrips
@@ -35,14 +34,14 @@ namespace AlexBWFieldtrips
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.2.0.1")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency("thumbly.baldiplus.fieldtripAPI", "1.2.2")]
+    [BepInDependency("thumbly.baldiplus.fieldtripAPI", "1.3.1")]
 #if !RELEASELANGLESS
     [BepInDependency("alexbw145.bbplus.multilanguageapi", BepInDependency.DependencyFlags.HardDependency)]
 #endif
     [BepInProcess("BALDI.exe")]
     public class AlexBWFieldTripsPlugin : BaseUnityPlugin
     {
-        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.1.1";
+        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.1.2";
         public static AlexBWFieldTripsPlugin Instance { get; private set; }
         public static readonly AssetManager assetMan = new AssetManager();
         internal static ConfigEntry<bool> CartTimeTrialGhosts;
@@ -68,6 +67,7 @@ namespace AlexBWFieldtrips
                 var toggle = CreateToggle("CartTimeTrialGhosts", "Time Trial Ghosts", CartTimeTrialGhosts.Value, new Vector2(75f, 40f), 198f);
                 AddTooltip(toggle, "If enabled, ghosts can appear\nfor Coasting Cart Racing's time trials\nand you are able to record your own attempted time!");
                 toggle.GetComponentInChildren<StandardMenuButton>().OnPress.AddListener(() => CartTimeTrialGhosts.Value = toggle.Value);
+#if false
                 if (CoreGameManager.Instance == null && BaseGameManager.Instance == null)
                 {
                     void GoToTrip()
@@ -82,6 +82,7 @@ namespace AlexBWFieldtrips
                     }
                     var button = CreateTextButton(new UnityAction(GoToTrip), "ABWLandHeadTo", "Visit ABWLand", new Vector2(75f, -120f), MTM101BaldAPI.UI.BaldiFonts.ComicSans24, TextAlignmentOptions.Bottom, new Vector2(125f, 100f), Color.black);
                 }
+#endif
             }
         }
 
@@ -92,49 +93,17 @@ namespace AlexBWFieldtrips
             {
                 handler.AddCategory<ModOptions>("ABW's Funland");
             };
+#if RELEASELANGLESS
+            AssetLoader.LocalizationFromFile(Path.Combine(AssetLoader.GetModPath(this), "Localization", "abwfunland_en.json"), Language.English);
+#else
             AssetLoader.LocalizationFromFunction((lang) =>
             {
-#if RELEASELANGLESS
-                if (!LocalizationStopwatch.ContainsKey(lang))
-                    LocalizationStopwatch.Add(lang, new("{0:00}:{1:00}.{2:000}", false));
-                return new Dictionary<string, string>()
-                {
-
-                    { "Level_Trip_AlexBWWorld", "AlexBW145's Funland" },
-
-                    { "Mgm_SuperWanted64DS_Title", "WANTED!" },
-                    { "Mgm_SuperWanted64DS_Desc", "Looks like the students are scattered around, but only one is different from the rest!" },
-                    { "Mgm_SuperWanted64DS_Win", "You've managed to reach to that required score! Way to go!" },
-                    { "Mgm_SuperWanted64DS_Lose", "School's out! Looks like you did not make it to the required score." },
-
-                    { "Mgm_DededeCartRacing_Title", "Coasting Cart Racing" },
-                    { "Mgm_DededeCartRacing_Desc", "Race against 7 other participants for the top 4! Watch out for incoming obstacles!" },
-                    { "Mgm_DededeCartRacing_Win", "You've placed {0}, way to go! Now that was a coasting experience!" },
-                    { "Mgm_DededeCartRacing_Lose", "You've placed {0}, but the race was already over..." },
-                    { "Mgm_DededeCartRacing_Perfect", "No Hit Bonus! +{0} YTPs" },
-                    { "Mgm_DededeCartRacing_FinalScore", "Final score: {0}\n\n" },
-
-                    { "Vfx_ABW_BusPass", "Dude... You're gonna need a bus pass to enter through my portal!" },
-                    { "Vfx_ABW_FunlandTrip", "Oh hello there!" },
-                    { "Vfx_ABW_FunlandTrip1", "Let's go to my funland!" },
-                    { "Vfx_ABW_FunlandIntro", "Welcome to my funland!" },
-                    { "Vfx_ABW_FunlandIntro1", "It's, pretty much uh..." },
-                    { "Vfx_ABW_FunlandIntro2", "It looks, like..." },
-                    { "Vfx_ABW_FunlandIntro3", "I've built this place all by myself..." },
-                    { "Vfx_ABW_FunlandIntro4", "You could play the minigames though!" },
-                    { "Vfx_ABW_FunlandIntro5", "I have two of them which you can search for students" },
-                    { "Vfx_ABW_FunlandIntro6", "which one of them is unique from the others." },
-                    { "Vfx_ABW_FunlandIntro7", "Or, you could just go to the cart ride racing adventure!" },
-                    { "Vfx_ABW_FunlandIntro8", "But I dunno about you." }
-                };
-#else
                 var localization = Info.LoadLocalizationFromYaml(lang, out var results, "StopwatchFormat", "StopwatchAutosize");
                 if (!LocalizationStopwatch.ContainsKey(lang))
                     LocalizationStopwatch.Add(lang, new(results["StopwatchFormat"], Convert.ToBoolean(results["StopwatchAutosize"])));
                 return localization;
+            });
 #endif
-            }
-            );
             assetMan.Add<Sprite[]>("Tutorial/WANTED", [
                 AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "1.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "2.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "3.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "4.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "5.jpg"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Tutorial", "WANTED", "6.jpg")
                 ]);
@@ -371,7 +340,7 @@ namespace AlexBWFieldtrips
                 .SetEndText("Mgm_DededeCartRacing_Win", "Mgm_DededeCartRacing_Lose")
                 .SetMusic(assetMan.Get<LoopingSoundObject>("Music/CartRace"))
                 .SetWinBonus(1500)
-                .SetScoringType(ScoringType.LowestTime)
+                .SetScoringType(ScoringType.LowestTime) // Todo: migrate this timer format to FieldTRIPS API.
                 .Build().GetComponent<Minigame_CartRacing>();
             kartracing.minigameHud = Instantiate(FieldTripsAPI.minigameHudPref, kartracing.transform.Find("GameCanvas").Find("Game"));
             kartracing.audFinished = studentfind.timeBell;
@@ -812,7 +781,7 @@ namespace AlexBWFieldtrips
             FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierOne);
             //FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierTwo);
             //FieldTripsAPI.AddFieldTrip(fieldtripLocation, 50, TripTiers.TierThree);
-
+#if false
             PitstopGameManager forcedTripManager = new FieldTripGameManagerBuilder()
                 .SetFieldTrip(fieldtripLocation)
                 .SetName("FieldTripManager_ABWLand")
@@ -822,6 +791,8 @@ namespace AlexBWFieldtrips
             forcedTripScene.levelTitle = "ABW";
             forcedTripScene.manager = forcedTripManager;
             assetMan.Add("ForcedFieldTrip", forcedTripScene);
+#endif
+            FieldTripsAPI.AddTripToMenu(fieldtripLocation, "But_Trip_ABWLand", "Men_ABWLandTrip");
         }
 
         private GameObject CreateStageBackground(GameObject bgSetTemplate, string name, Texture2D foreground, Texture2D foregroundBottom, Texture2D sky)

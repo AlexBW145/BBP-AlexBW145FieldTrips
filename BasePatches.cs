@@ -1,17 +1,8 @@
-﻿using AlexBWFieldtrips.DededeeCartRacing;
-using AlexBWFieldtrips.Wanted;
+﻿using AlexBWFieldtrips.Wanted;
 using HarmonyLib;
 using MTM101BaldAPI;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using ThumblysFieldTripsAPI.Extentions;
-using ThumblysFieldTripsAPI.Registers;
 using TMPro;
-using UnityCipher;
 using UnityEngine;
 
 namespace AlexBWFieldtrips
@@ -44,6 +35,7 @@ namespace AlexBWFieldtrips
             if (___minigame == dedede)
                 ___bonusTmp.text = string.Format(LocalizationManager.Instance.GetLocalizedText("Mgm_DededeCartRacing_Perfect"), ___perfectBonus);
         }
+#if false
         [HarmonyPatch(typeof(MinigameHUD), nameof(MinigameHUD.SetScore)), HarmonyPrefix]
         private static bool TimerElasped(int points, MinigameHUD __instance, TMP_Text ___scoreTmp)
         {
@@ -64,6 +56,7 @@ namespace AlexBWFieldtrips
             }
             return true;
         }
+#endif
 #if DEBUG
         [HarmonyPatch(typeof(PitstopGameManager), "AwakeFunction"), HarmonyPostfix]
         static void InsertFieldTrip(ref WeightedFieldTrip[] ___tierOneTrips, ref FieldTripObject ___forcedTrip)
@@ -145,7 +138,7 @@ namespace AlexBWFieldtrips
                 }
             }
         }
-        #region HIGH SCORE STUFF
+#if false
         private static MethodInfo
             _SortMinigameScores = AccessTools.Method(typeof(ModdedFieldTripScoreManager), "SortMinigameScores"),
             _ShowResults = AccessTools.Method(typeof(MinigameBase), "ShowResults", [typeof(bool), typeof(int), typeof(int)]);
@@ -359,6 +352,6 @@ namespace AlexBWFieldtrips
             }
             return true;
         }
-        #endregion
+#endif
     }
 }

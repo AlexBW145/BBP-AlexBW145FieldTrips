@@ -7,13 +7,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using TarodevGhost;
+using ThumblysFieldTripsAPI.Extentions;
 using UnityCipher;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace AlexBWFieldtrips.DededeeCartRacing;
-public class Minigame_CartRacing : Minigame
+public class Minigame_CartRacing : ExtendedMinigame
 {
     private static FieldInfo
         _cameraStack = AccessTools.Field(typeof(UniversalAdditionalCameraData), "m_Cameras"),
@@ -125,6 +126,7 @@ public class Minigame_CartRacing : Minigame
             minigameHud.HideScore();
         else
             minigameHud.SetScore(0);
+        SetTime(0f);
         minigameBase.SetFinalRound(stages.Count);
         trackerTransform.sizeDelta = new(55f * stages.Count, 15f);
         stageBounds = new Rect(15f, -400f, 1380f + 15f, 800f);
@@ -196,7 +198,7 @@ public class Minigame_CartRacing : Minigame
     public override void VirtualReset()
     {
         base.VirtualReset();
-        ElaspedTime = 0f;
+        SetTime(0f);
         SmoothTime = 0f;
         minigameHud.Reinitialize();
         GameObject.FindObjectsOfType<CartObject>(true).DoIf(x => stages.Contains(x.transform.parent?.gameObject), x => Destroy(x.gameObject));
@@ -232,12 +234,17 @@ public class Minigame_CartRacing : Minigame
         }
     }
 
+    protected override void SetTime(float time)
+    {
+        base.SetTime(time);
+        minigameHud.SetTime(ElapsedTime);
+    }
+
     public override void VirtualUpdate()
     {
         base.VirtualUpdate();
         if (!raceFinished)
-            ElaspedTime += minigameBase.DeltaTime;
-        minigameHud.SetScore(0);
+            SetTime(minigameBase.DeltaTime);
         var player = CartRacerController.PlayerInstance;
         if (player != null && player.transform.localPosition.x >= stageBounds.xMin && player.transform.localPosition.x < (stageBounds.width - 150f))
         {

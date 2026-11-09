@@ -32,16 +32,16 @@ using UnityEngine.UI;
 namespace AlexBWFieldtrips
 {
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
-    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.2.0.1")]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "11.2.0.2")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency("thumbly.baldiplus.fieldtripAPI", "1.3.1")]
+    [BepInDependency("thumbly.baldiplus.fieldtripAPI", "1.4.0")]
 #if !RELEASELANGLESS
     [BepInDependency("alexbw145.bbplus.multilanguageapi", BepInDependency.DependencyFlags.HardDependency)]
 #endif
     [BepInProcess("BALDI.exe")]
     public class AlexBWFieldTripsPlugin : BaseUnityPlugin
     {
-        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.1.2";
+        public const string PLUGIN_GUID = "alexbw145.bbplus.thegamerfieldtrips", PLUGIN_NAME = "AlexBW145's Custom Field Trips", PLUGIN_VERSION = "1.0.2.0";
         public static AlexBWFieldTripsPlugin Instance { get; private set; }
         public static readonly AssetManager assetMan = new AssetManager();
         internal static ConfigEntry<bool> CartTimeTrialGhosts;
@@ -283,7 +283,7 @@ namespace AlexBWFieldtrips
 
             yield return "WANTED!"; // SM64DS Wanted!
             var findMusic = assetMan.Get<LoopingSoundObject>("Music/WANTED");
-            var studentfind = new MinigameBaseBuilder<Minigame_Wanted>()
+            var studentfind = new MinigameBaseBuilder<Minigame_Wanted>(Info)
                 .SetName("Minigame_SuperWanted64DS")
                 .SetEnum("SuperWanted64DS")
                 .SetTitle("Mgm_SuperWanted64DS_Title", "Mgm_SuperWanted64DS_Desc")
@@ -334,14 +334,14 @@ namespace AlexBWFieldtrips
             _musicObject.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), findTutorialMusic);
             //_minigame.SetValue(studentfindTutorial.GetComponent<MinigameBase>(), (MinigameName)_minigame.GetValue(studentfind.GetComponent<MinigameBase>())); // See the patches
             yield return "Canvas Cursed"; // Canvas Curse Dedede's Cart Racing
-            var kartracing = new MinigameBaseBuilder<Minigame_CartRacing>()
+            var kartracing = new MinigameBaseBuilder<Minigame_CartRacing>(Info)
                 .SetName("Minigame_DededeCartRacing")
                 .SetEnum("DededeCartRacing")
                 .SetTitle("Mgm_DededeCartRacing_Title", "Mgm_DededeCartRacing_Desc")
                 .SetEndText("Mgm_DededeCartRacing_Win", "Mgm_DededeCartRacing_Lose")
                 .SetMusic(assetMan.Get<LoopingSoundObject>("Music/CartRace"))
                 .SetWinBonus(1500)
-                .SetScoringType(ScoringType.LowestTime) // Todo: migrate this timer format to FieldTRIPS API.
+                .SetScoringType(ScoringType.FastestTime) // Todo: migrate this timer format to FieldTRIPS API.
                 .Build().GetComponent<Minigame_CartRacing>();
             kartracing.minigameHud = Instantiate(FieldTripsAPI.minigameHudPref, kartracing.transform.Find("GameCanvas").Find("Game"));
             kartracing.audFinished = studentfind.timeBell;
@@ -595,7 +595,7 @@ namespace AlexBWFieldtrips
                 .SetBusTransform(buspos.position, Direction.South)
                 .SetPitstopItemOffset(new Vector3(170f, 0f, -170f))
                 .SetFunctionGameobject(function.gameObject)
-                .SetTutorialBaldiSprite(assetMan.Get<Sprite>("ABW/Idle"))
+                .SetTutorBaldiAnimation(new SpriteAnimation([assetMan.Get<Sprite>("ABW/Idle")], 1f))
                 .SetIntroTutor(new(buspos.position.x + 14f, 3.66f, buspos.position.z + 6f), null)
                 .AddMinigameTrigger(new MinigameSettings(studentfind.GetComponent<MinigameBase>(), gamelocations[0].position + (Vector3.up * 5f)))
                 .AddMinigameTutorialBaldi(studentfindTutorial, new(tutorialLocations[0].position.x, 5f, tutorialLocations[0].position.z))
@@ -674,7 +674,7 @@ namespace AlexBWFieldtrips
             var fieldtripLocation = new FieldTripBuilder()
                 .SetName("SelfInsertsSelfMadeFieldTrips")
                 .SetEnum("AlexBWWorld")
-                .SetBaldiSprites(assetMan.Get<Sprite>("ABW/Idle"), assetMan.Get<Sprite>("ABW/Talk"))
+                .SetBaldiAnimation(assetMan.Get<Sprite>("ABW/Idle"), assetMan.Get<Sprite>("ABW/Talk"))
                 .SetSound(assetMan.Get<SoundObject>("ABW/FieldTrip"))
                 .SetSkybox(sceneObjectOnAccident.skybox)
                 .SetHubRoom(tripHub)

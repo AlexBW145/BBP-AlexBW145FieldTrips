@@ -90,6 +90,7 @@ public class Minigame_Wanted : Minigame
         }
         else
         {
+            minigameHud.SetScore(0);
             minigameBase.SetFinalRound(999);
         }
     }
@@ -112,6 +113,8 @@ public class Minigame_Wanted : Minigame
     public override void VirtualReset()
     {
         base.VirtualReset();
+        if (scoringMode)
+            minigameHud.SetScore(0);
         actualSavedTime = 20f;
         ResetCamera();
         LanternSources.Clear();
@@ -352,6 +355,8 @@ public class Minigame_Wanted : Minigame
     {
         foreach (var student in spawnedStudents)
             student.Despawn();
+        if (!spawnedStudents.Contains(targetStudent))
+            targetStudent.Despawn();
         spawnedStudents.Clear();
     }
 
